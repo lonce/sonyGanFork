@@ -25,7 +25,7 @@ This runs a small configuration:
 runscripts/runtrainTEST.sh  config_files/new/testconfig.json
 ```
 You will see that the script ouputs some text, the last line gives you the command to run to watch the stderr output flow (tail -f <logfile>/stderr.txt). Copy and paste it to the shell. 
-Depending on your machine, it could take 20 minutes to ru, but that is long enought to get 
+Depending on your machine, it could take 20 minutes to run, but that is long enough to then generate a discernable, if noisy musical scale from nsynth data. 
 
 # Training a new model
 Now your can train by executing a script:
