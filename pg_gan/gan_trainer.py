@@ -94,6 +94,8 @@ class GANTrainer():
         if not self.useGPU:
             self.numWorkers = 1
 
+        self.visualisation=visualisation
+
         # self.pathAttribDict = pathAttribDict
         self.pathAttribDict = config.get("pathAttribDict", None)
         self.selectedAttributes = selectedAttributes
@@ -417,7 +419,8 @@ class GANTrainer():
                     # Reinitialize the losses
                     self.updateLossProfile(self.iter)
                     self.resetRunningLosses()
-                    self.sendLossToVisualization(scale)
+                    if self.visualisation is not None:
+                        self.sendLossToVisualization(scale)
 
                 # Save checkpoint
                 if self.checkPointDir is not None and \

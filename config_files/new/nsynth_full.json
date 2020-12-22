@@ -1,0 +1,69 @@
+{
+    "name": "2020.12.21_batch24a",
+    "comments": "fixed alpha_configuration",
+    "output_path": "output",
+    "loaderConfig": {
+        "data_path": "/mydata/nsynth-train/audio",
+        "att_dict_path": "/mydata/nsynth-train/examples.json",
+        "filter": ["acoustic"],
+        "instrument_labels": ["brass", "flute", "guitar", "keyboard", "mallet"],
+        "shuffle": false,
+        "attribute_list": ["pitch"],
+        "pitch_range": [44, 70],
+        "load_metadata": true,
+        "size": 24521
+    },
+        
+    "transformConfig": {
+		"transform": "specgrams",
+        "fade_out": true,
+        "fft_size": 1024,
+        "win_size": 1024,
+        "n_frames": 64,
+        "hop_size": 256,
+        "log": true,
+        "ifreq": true,
+        "sample_rate": 16000,
+        "audio_length": 16000
+    },
+    "modelConfig": { 
+        "formatLayerType": "gansynth",
+        "ac_gan": true,
+        "downSamplingFactor": [
+            [16, 16],
+            [8, 8],
+            [4, 4],
+            [2, 2],
+            [1, 1]
+        ],
+        "imagefolderDataset": true,
+        "maxIterAtScale": [200000, 200000, 200000, 300000, 300000 ],
+        "alphaJumpMode": "linear",
+        "alphaNJumps": [3000, 3000, 3000, 3000, 3000],
+        "alphaSizeJumps": [32, 32, 32, 32, 32],
+        "transposed": false,
+                "depthScales": [ 
+            128,
+            64,
+            64,
+            64,
+            32
+        ],
+        "miniBatchSize": [12, 12, 12, 8, 8],
+        "dimLatentVector": 64,
+        "perChannelNormalization": true,
+        "lossMode": "WGANGP",
+        "lambdaGP": 10.0,
+        "leakyness": 0.02,
+        "miniBatchStdDev": true,
+        "baseLearningRate": 0.0008,
+        "dimOutput": 2,
+        "weightConditionG": 10.0,
+        "weightConditionD": 10.0,
+        "attribKeysOrder": {
+            "pitch": 0
+        },
+        "startScale": 0,
+        "skipAttDfake": []
+    }
+}
