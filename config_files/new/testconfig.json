@@ -1,5 +1,4 @@
 {
-    "name": "testconfig",
     "comments": "test_configuration",
     "output_path": "output",
     "loaderConfig": {

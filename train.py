@@ -100,7 +100,9 @@ if __name__ == "__main__":
     for item, val in configOverride.items():
         data_config[item] = val
 
-    exp_name = config.get("name", "default")
+    exp_name = kwargs['name'] 
+    if exp_name is "default":  # argument overrides config file for name
+        exp_name = config.get("name", "default")
     checkPointDir = config["output_path"]
     checkPointDir = mkdir_in_path(checkPointDir, exp_name)
     # config["output_path"] = checkPointDir
