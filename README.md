@@ -20,9 +20,9 @@ The first thing you need to do to use this code is fire up a container from the 
 (You'll see a few warnings about depcrated calls that seem to be harmless for the time being). 
 
 # Smallish test run
-This runs a small configuration:
+This runs a small configuration, creating output in output/outname:
 ```
-runscripts/runtrainTEST.sh  config_files/new/testconfig.json
+runscripts/runtrainTEST.sh  -n outname config_files/new/testconfig.json
 ```
 You will see that the script ouputs some text, the last line gives you the command to run to watch the stderr output flow (tail -f logsdir.xxxx/stderr.txt). Copy and paste it to the shell. 
 Depending on your machine, it could take 20 minutes to run, but that is long enough to then generate a discernable, if noisy musical scale from nsynth data. 
@@ -30,8 +30,9 @@ Depending on your machine, it could take 20 minutes to run, but that is long eno
 # Training a new model
 Now your can train by executing a script:
 ```
-runscripts/runtrain.sh  <path-to-configuration-file>
+runscripts/runtrain.sh -n outname  <path-to-configuration-file>
 ```
+-n outname overrides the "name" field in the config file. 
 # Example of config file:
 The experiments are defined in a configuration file with JSON format.
 ```
