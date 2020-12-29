@@ -1,6 +1,11 @@
 output_networks/*
 *.pyc
-.DS_Store
+
+#ignore folders in logs, but not files (utilities)
+logs/*/
+
+#ignore folders in the output directory
+/output/*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
