@@ -47,9 +47,13 @@ The experiments are defined in a configuration file with JSON format.
         "filter": ["acoustic"],
         "instrument_labels": ["brass", "flute", "guitar", "keyboard", "mallet"],
         "shuffle": false,
+
+        # I *think* this is just used to filter the files used for training
         "attribute_list": ["pitch"], #the 'conditioning' param used for the GAN
         "pitch_range": [44, 70], #the full range of pitches in the nsynth db
         "load_metadata": true,
+
+        # not sure why this is here. Instances that match filter critera are counted in code
         "size": 24521   #the number of training examples(???)
     },
         
@@ -98,8 +102,11 @@ The experiments are defined in a configuration file with JSON format.
         "miniBatchStdDev": true,
         "baseLearningRate": 0.0008,
         "dimOutput": 2,
-        "weightConditionG": 10.0,
-        "weightConditionD": 10.0,
+
+        # from original AC-GAN paper nad Nistal paper
+        "weightConditionG": 10.0, #in AC-GAN, weight of the classification loss applied to the generator
+        "weightConditionD": 10.0, #in AC-GAN, weight of the classification loss applied to the discriminator
+        # used for conditional training
         "attribKeysOrder": {
             "pitch": 0
         },
@@ -145,5 +152,12 @@ random - generates a bunch of files from random points in the latent space letti
 
 # Audio examples (from sony)
 [Here](https://sites.google.com/view/audio-synthesis-with-gans/p%C3%A1gina-principal) you can listen to audios synthesized with models trained on a variety of audio representations, includeing the raw audio waveform and several time-frequency representations.
+
+# Key background papers
+[Odena's AC-GAN](https://arxiv.org/pdf/1610.09585.pdf)
+[Wasserstein earth-mover distance] (https://arxiv.org/pdf/1704.00028.pdf)
+[GANSynth] (https://arxiv.org/abs/1902.08710?)
+
 ## Notes
 This repo is still a work in progress. Please submit issues!
+
