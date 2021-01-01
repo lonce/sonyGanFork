@@ -123,7 +123,7 @@ I haven't figured out how sony visualizes the metrics of the training run. What 
 cd logs
 stderr2data.sh    <path-to-log-files>/stderr.txt > <path-to-log-files>/plotable.txt
 ```
-Now you can run the jupyter notebook, plotLosses.ipynb, set the path and stages parameters in the cell labels '# Set parameters in this cell' and then run all cells to get your plots. 
+Now you can run the jupyter notebook, plotLosses.ipynb (in a scripts directory), set the path and stages parameters in the cell labels '# Set parameters in this cell' and then run all cells to get your plots. 
 
 # Evaluation 
 ### (from sony - I haven't tried this yet)

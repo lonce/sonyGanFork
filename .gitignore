@@ -2,7 +2,7 @@ output_networks/*
 *.pyc
 
 #ignore folders in logs, but not files (utilities)
-logs/*/
+logs/
 
 #ignore folders in the output directory
 /output/*/
