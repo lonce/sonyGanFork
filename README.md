@@ -62,6 +62,7 @@ The experiments are defined in a configuration file with JSON format.
         "fade_out": true,
         "fft_size": 1024,
         "win_size": 1024,
+        # I think n_frames and hop_size  are essentially specifying how long the wave files are. 
         "n_frames": 64,
         "hop_size": 256,
         "log": true,
@@ -118,12 +119,8 @@ The experiments are defined in a configuration file with JSON format.
 ```
 
 # Plotting the output
-I haven't figured out how sony visualizes the metrics of the training run. What I do is extract data from the logs that can then be read in a python notebook and plotted. OK for now:
-```
-cd logs
-stderr2data.sh    <path-to-log-files>/stderr.txt > <path-to-log-files>/plotable.txt
-```
-Now you can run the jupyter notebook, plotLosses.ipynb (in a scripts directory), set the path and stages parameters in the cell labels '# Set parameters in this cell' and then run all cells to get your plots. 
+Run jupyter notebook, and open plotPickle.ipynb. In the notebook, set the 'infile' to be the xxx_losses.pkl file in your output directory. Then just run all the cells in the notebook. 
+ 
 
 # Evaluation 
 ### (from sony - I haven't tried this yet)
