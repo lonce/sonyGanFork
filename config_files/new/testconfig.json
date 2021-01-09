@@ -2,8 +2,8 @@
     "comments": "test_configuration",
     "output_path": "output",
     "loaderConfig": {
-        "data_path": "/mydata/nsynth-train/audio",
-        "att_dict_path": "/mydata/nsynth-train/examples.json",
+        "data_path": "/scratch/cnmwll/nsynth-train/audio",
+        "att_dict_path": "/scratch/cnmwll/nsynth-train/examples.json",
         "filter": ["acoustic"],
         "instrument_labels": ["brass", "flute", "guitar", "keyboard", "mallet"],
         "shuffle": false,
