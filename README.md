@@ -226,7 +226,8 @@ random - generates a bunch of files from random points in the latent space letti
 [GANSynth] (https://arxiv.org/abs/1902.08710?)  
 
 ## Notes
+
 1) We are not seeing the kind of convergence in the error measures we expected from the nsynth results reported in the Comparing Representation paper. Several errors grow, particularly in the last prgressive stage of the GAN. However, the sounds that the network generates after training are still of very high quality. Please drop us a note if you find parameters that make these error measures behave better.   
 
-2)This repo is evolving. Please submit issues!
+2) This repo is evolving. Please submit issues!
 
