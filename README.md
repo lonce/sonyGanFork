@@ -1,7 +1,11 @@
 # sonyGanForked
 
  
- This repo is a fork of [Comparing-Representations-for-Audio-Synthesis-using-GANs](https://github.com/SonyCSLParis/Comparing-Representations-for-Audio-Synthesis-using-GANs).  The requirements and install procedure are different from the original so that it works and is sharable assuming you are running on nvidia graphics cards and have [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)  installed.
+ This repo is a fork of [Comparing-Representations-for-Audio-Synthesis-using-GANs](https://github.com/SonyCSLParis/Comparing-Representations-for-Audio-Synthesis-using-GANs).  The requirements and install procedure are updated a bit from the original so that it works and is sharable through containerization. 
+ 
+ The Docker version assumes you are running on nvidia graphics cards and have [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)  installed.
+ 
+ The Singularity version is for internal use (we use an image built on our university computers that run on a rack of V100s), but it is built with same libraries and packages as found in the requirements.txt and docker file. 
 
 
 
@@ -43,6 +47,9 @@ runscripts/runtrain.sh -n outname  <path-to-configuration-file>
 ```
 -n outname overrides the "name" field in the config file. 
 
+___
+___
+
 
 # <span style="color:green"> SINGULARITY </span>
 This section is for running in a Singularity container. For running in a Docker container (e.g. on your local machine), see <span style="color:maroon"> DOCKER </span> below.
@@ -51,7 +58,7 @@ This section is for running in a Singularity container. For running in a Docker 
 0) Have an account on NUS high-performance computing. Run on the atlas machines. 
 1) There is already an image built with all the libs and python packages we need. You can assign it to an environment variable in a bash shellor bash script:
 ```
-   $ image= /app1/common/singularity-img/3.0.0/user_img/freesound-gpst-pytorch_1.7_ngc-20.12-py3.simg
+   $ image=/app1/common/singularity-img/3.0.0/user_img/freesound-gpst-pytorch_1.7_ngc-20.12-py3.simg
 ```
 
 
@@ -62,7 +69,7 @@ I think you have to be logged in on atlas9.nus.edu.sg. This example runs the sma
  $ qsub -I -l select=1:mem=50GB:ncpus=10:ngpus=1 -l walltime=01:00:00 -q volta_login
  # WAIT FOR INTERACTIVE JOB TO START, then create container:
  $ singularity exec $image bash
- #Now you can run your python code:
+ # Now you can run your python code:
  $ python train.py --restart  -n "mytestoutdir" -c $configfile -s 500 -l 200
 ```
 (You'll have to set the ouput_path, the data_path, and the att_dict_path values in the config file first. The -n arg is the name of the folder inside the output_path where your checkpoints will be written). 
@@ -70,12 +77,12 @@ I think you have to be logged in on atlas9.nus.edu.sg. This example runs the sma
 ### <span style="color:green"> Submitting non-interactive jobs </span>
 ```
  $ qsub runscripts/runtrain.pb
- #Or for running the small test non-interactively:
+ # Or for running the small test non-interactively:
  $ qsub runscripts/runtrainTEST.pb
 ```
 Unfortuneately, you can't pass args to a scripit that you are submitting with qsub. Thus you will need to edit these scripts to set the output folder name and the config file you want to use.  You will also have to set the output_path, the data_path, and the att_dict_path values in the config file.
 
-You'll notice that I use rsynch to move the data to the /scratch directory on the machie the system allocates to run the job (you don't have control over which machine that is). I normally do this to speed up the I/O between the GPU and the disk, but for sonyGAN, the preprocessing step writes the preprocessed data to the output_path which is probably on your local disk anyway, subverting any attempts to speed things up this way. 
+You'll notice that I use rsynch to move the data to the /scratch directory on the machine the system allocates to run the job (you don't have control over which machine that is). I normally do this to speed up the I/O between the GPU and the disk, but for sonyGAN, the preprocessing step writes the preprocessed data to the output_path which is probably on your local disk anyway, subverting any attempts to speed things up this way. 
 
 ## <span style="color:green">  Viewing the error plots after a run  </span>
 You can run a notebook on atlas9 while interacting with it through a browser on your local machine. :
@@ -214,10 +221,12 @@ random - generates a bunch of files from random points in the latent space letti
 [Here](https://sites.google.com/view/audio-synthesis-with-gans/p%C3%A1gina-principal) you can listen to audios synthesized with models trained on a variety of audio representations, includeing the raw audio waveform and several time-frequency representations.
 
 # Key background papers
-[Odena's AC-GAN](https://arxiv.org/pdf/1610.09585.pdf)
-[Wasserstein earth-mover distance] (https://arxiv.org/pdf/1704.00028.pdf)
-[GANSynth] (https://arxiv.org/abs/1902.08710?)
+[Odena's AC-GAN](https://arxiv.org/pdf/1610.09585.pdf)  
+[Wasserstein earth-mover distance] (https://arxiv.org/pdf/1704.00028.pdf)  
+[GANSynth] (https://arxiv.org/abs/1902.08710?)  
 
 ## Notes
-This repo is still a work in progress. Please submit issues!
+1) We are not seeing the kind of convergence in the error measures we expected from the nsynth results reported in the Comparing Representation paper. Several errors grow, particularly in the last prgressive stage of the GAN. However, the sounds that the network generates after training are still of very high quality. Please drop us a note if you find parameters that make these error measures behave better.   
+
+2)This repo is evolving. Please submit issues!
 
