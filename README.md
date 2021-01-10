@@ -1,6 +1,19 @@
 # sonyGanForked
-This repo is a fork of [Comparing-Representations-for-Audio-Synthesis-using-GANs](https://github.com/SonyCSLParis/Comparing-Representations-for-Audio-Synthesis-using-GANs).  The requirements and install procedure are different from the original so that it works and is sharable assuming you are running on nvidia graphics cards and have [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)  installed.
-# Install
+
+ 
+ This repo is a fork of [Comparing-Representations-for-Audio-Synthesis-using-GANs](https://github.com/SonyCSLParis/Comparing-Representations-for-Audio-Synthesis-using-GANs).  The requirements and install procedure are different from the original so that it works and is sharable assuming you are running on nvidia graphics cards and have [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)  installed.
+
+
+
+# The dataset
+You can run some test using the same dataset used by the Sony folks:  the [Nsynth datasaet](https://magenta.tensorflow.org/datasets/nsynth). Scroll down to 'Files' and grab the json/wav version of the 'Train' set (A training set with 289,205 examples). It's big, something approaching 20Gb.
+
+___
+___
+
+# <span style="color:maroon"> DOCKER </span>
+This section is for running in an nvidia-docker container. For running in a Singularity container (used on NUS atlas machines), see <span style="color:maroon"> SINGULARITY </span> below.
+## <span style="color:maroon"> Install </span>
 0) install [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
 1) Build the image foo with tag bar:
 ```
@@ -8,18 +21,14 @@ This repo is a fork of [Comparing-Representations-for-Audio-Synthesis-using-GANs
    $ docker image build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --file Dockerfile --tag foo:bar ../
 ```
 
-
-# The dataset
-You can run some test using the same dataset used by the Sony folks:  the [Nsynth datasaet](https://magenta.tensorflow.org/datasets/nsynth). Scroll down to 'Files' and grab the json/wav version of the 'Train' set (A training set with 289,205 examples). It's big, something approaching 20Gb.
-
-# Running
+## <span style="color:maroon"> Running </span>
 The first thing you need to do to use this code is fire up a container from the image *from the sonyGanForked directory* (don't change the first -v mounting arg). The second mounting arg needs the full path to your data directory before the colon, leave the name 'mydata' as it is. 'foo' and 'bar' are whatever name and tag you gave to your docker image.
 ```
  $ docker run  --shm-size=10g --gpus "device=0" -it -v $(pwd):/sonyGan -v /full/path/to/datadir:/mydata --rm foo:bar
 ```
 (You'll see a few warnings about depcrated calls that seem to be harmless for the time being). 
 
-# Smallish test run
+## <span style="color:maroon"> Smallish test run </span>
 This runs a small configuration, creating output in output/outname:
 ```
 runscripts/runtrainTEST.sh  -n outname config_files/new/testconfig.json
@@ -27,23 +36,78 @@ runscripts/runtrainTEST.sh  -n outname config_files/new/testconfig.json
 You will see that the script ouputs some text, the last line gives you the command to run to watch the stderr output flow (tail -f logsdir.xxxx/stderr.txt). Copy and paste it to the shell. 
 Depending on your machine, it could take 20 minutes to run, but that is long enough to then generate a discernable, if noisy musical scale from nsynth data. 
 
-# Training a new model
+##  <span style="color:maroon"> Training a new model </span>
 Now your can train by executing a script:
 ```
 runscripts/runtrain.sh -n outname  <path-to-configuration-file>
 ```
 -n outname overrides the "name" field in the config file. 
+
+
+# <span style="color:green"> SINGULARITY </span>
+This section is for running in a Singularity container. For running in a Docker container (e.g. on your local machine), see <span style="color:maroon"> DOCKER </span> below.
+
+## <span style="color:green">  Install </span>
+0) Have an account on NUS high-performance computing. Run on the atlas machines. 
+1) There is already an image built with all the libs and python packages we need. You can assign it to an environment variable in a bash shellor bash script:
+```
+   $ image= /app1/common/singularity-img/3.0.0/user_img/freesound-gpst-pytorch_1.7_ngc-20.12-py3.simg
+```
+
+
+## <span style="color:green"> Running </span>
+### <span style="color:green"> running interactively </span>
+I think you have to be logged in on atlas9.nus.edu.sg. This example runs the smallish test run on nsynth using mel and just a few iterations per progressive gan scale.
+```
+ $ qsub -I -l select=1:mem=50GB:ncpus=10:ngpus=1 -l walltime=01:00:00 -q volta_login
+ # WAIT FOR INTERACTIVE JOB TO START, then create container:
+ $ singularity exec $image bash
+ #Now you can run your python code:
+ $ python train.py --restart  -n "mytestoutdir" -c $configfile -s 500 -l 200
+```
+(You'll have to set the ouput_path, the data_path, and the att_dict_path values in the config file first. The -n arg is the name of the folder inside the output_path where your checkpoints will be written). 
+
+### <span style="color:green"> Submitting non-interactive jobs </span>
+```
+ $ qsub runscripts/runtrain.pb
+ #Or for running the small test non-interactively:
+ $ qsub runscripts/runtrainTEST.pb
+```
+Unfortuneately, you can't pass args to a scripit that you are submitting with qsub. Thus you will need to edit these scripts to set the output folder name and the config file you want to use.  You will also have to set the output_path, the data_path, and the att_dict_path values in the config file.
+
+You'll notice that I use rsynch to move the data to the /scratch directory on the machie the system allocates to run the job (you don't have control over which machine that is). I normally do this to speed up the I/O between the GPU and the disk, but for sonyGAN, the preprocessing step writes the preprocessed data to the output_path which is probably on your local disk anyway, subverting any attempts to speed things up this way. 
+
+## <span style="color:green">  Viewing the error plots after a run  </span>
+You can run a notebook on atlas9 while interacting with it through a browser on your local machine. :
+```
+ $ qsub -I -l select=1:mem=50GB:ncpus=10:ngpus=1 -l walltime=01:00:00 -q volta_login
+ # WAIT FOR INTERACTIVE JOB TO START, then create container running jupyter and exposing a port:
+ $ singularity exec $image jupyter notebook --no-browser --port=8889 --ip=0.0.0.0
+ #Then, BACK ON YOUR LOCAL MACHINE:
+ $ ssh -L 8888:volta01:8889 user_name@atlas9
+ # Then just point your browser to: http://localhost:8888
+```
+
+___
+___
+
+
+
+# Plotting the output
+Run jupyter notebook, and open plotPickle.ipynb. In the notebook, set the 'infile' to be the xxx_losses.pkl file in your output directory. Then just run all the cells in the notebook. 
+ 
+
 # Example of config file:
 The experiments are defined in a configuration file with JSON format.
 ```
 # This is the config file for the 'best' nsynth run in the Sony Gan paper (as far as I can tell). 
 {
-    "name": "myTestOut", #outputfolder in ouput_path for checkpoints, and generation. THIS SHOULD BE CHANGED FOR EVERY RUN YOU DO!!  (unless you want to start your run from the latest checkpoint here). This field should actually be provided by a flag - not stuck in a configuration file!
+    "name": "myTestOut", #outputfolder in ouput_path for checkpoints, and generation. **THIS SHOULD BE CHANGED FOR EVERY RUN YOU DO!!**  (unless you want to start your run from the latest checkpoint here). This field should actually be provided by a flag - not stuck in a configuration file!
     "comments": "fixed alpha_configuration",
-    "output_path": "output",
+    "output_path": "output",  # Used for preprocessed data and checkpoints. These files can be **BIG** - make sure you have space whereever you put it. On NUS machines, consider using /hpctmp/user_name/foo...
     "loaderConfig": {
-        "data_path": "/mydata/nsynth-train/audio", #'mydata' matches the mount point in the 'docker run' command above
-        "att_dict_path": "/mydata/nsynth-train/examples.json",
+        "data_path": "/mydata/nsynth-train/audio", # Path to audio data. ('mydata' matches the mount point in the 'docker run' command above.)
+        "att_dict_path": "/mydata/nsynth-train/examples.json", # Path to meta data file
         "filter": ["acoustic"],
         "instrument_labels": ["brass", "flute", "guitar", "keyboard", "mallet"],
         "shuffle": false,
@@ -80,7 +144,7 @@ The experiments are defined in a configuration file with JSON format.
             [2, 2],
             [1, 1]
         ],
-        "imagefolderDataset": true,
+        "imagefolderDataset": true, # ?? what does this param do?
         "maxIterAtScale": [200000, 200000, 200000, 300000, 300000 ],
         "alphaJumpMode": "linear",
         # alphaNJumps*alphaSizeJumps is the number of Iters it takes for alpha to go to zero. The product should typically be about half of the corresponding maxIterAtScale number above.
@@ -118,9 +182,6 @@ The experiments are defined in a configuration file with JSON format.
 
 ```
 
-# Plotting the output
-Run jupyter notebook, and open plotPickle.ipynb. In the notebook, set the 'infile' to be the xxx_losses.pkl file in your output directory. Then just run all the cells in the notebook. 
- 
 
 # Evaluation 
 ### (from sony - I haven't tried this yet)
@@ -137,6 +198,8 @@ python eval.py <pkid, ikid or fad> --real <path_to_real_data> --fake <path_to_fa
 ```
 
 # Synthesizing audio with a model
+
+Note: you have to be in a container (Docker or Singularity) to generate.
 ```
 python generate.py <random, scale, interpolation or from_midi> -d <path_to_model_root_folder>
 ```
