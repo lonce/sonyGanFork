@@ -70,6 +70,8 @@ class ProgressiveGANTrainer(GANTrainer):
 
         self.postprocessors = []
 
+        print(f"ProgressiveGANTrainer will pass kwargs to GANTrainer: {kwargs}")
+
         GANTrainer.__init__(self, **kwargs)
 
 

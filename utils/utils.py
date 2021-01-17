@@ -463,20 +463,39 @@ def extract_save_rainbowgram(audio, path, name):
     # plt.show()
 
         
-def saveAudioBatch(data, path, basename, sr=16000, overwrite=False):
+def saveAudioBatch(data, path, basename, sr=16000, latents=None, overwrite=False):
     from librosa.util.utils import ParameterError
     # outdata = resizeAudioTensor(data, orig_sr, target_sr)
     # taudio.save(path, outdata, sample_rate=target_sr)
+
+    data=list(data) #LW it was a map
+
+    # if no (or wrong) latents, we'll use zerors to zip tp looping over enumeration still works
+    if latents != None and len(latents)==len(data) :
+        zdata=zip(data,latents) 
+        print("saveAudioBatch: zipping audio with latents (and will write param files)")
+    else :
+        zdata=zip(data,[0]*len(data))
+        print("saveAudioBatch: zipping audio with naughts for latents (and will not write param files)")
+
     try:
-        for i, audio in enumerate(data):
+        for i, (audio, params) in enumerate(zdata) :
+        #for i, audio in enumerate(data): #LW
 
             if type(audio) != np.ndarray:
                 audio = np.array(audio, float)
 
             out_path = os.path.join(path, f'{basename}_{i}.wav')
+
+            # also get path/file names for parameter pytorch and text files
+            param_out_path = os.path.join(path, f'{basename}_{i}.pt')
+            txt_param_out_path = os.path.join(path, f'{basename}_{i}.txt')
             
             if not os.path.exists(out_path) or overwrite:
                 write_wav(out_path, audio.astype(float), sr)
+                if latents != None :
+                    torch.save(params, param_out_path)
+                    np.savetxt(txt_param_out_path, params.cpu().numpy())
             else:
                 print(f"saveAudioBatch: File {out_path} exists. Skipping...")
                 continue

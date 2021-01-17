@@ -139,6 +139,8 @@ if __name__ == "__main__":
                                nSamples=nSamples,
                                config=model_config)
 
+    print(f"MODEL_CONFIG: {model_config}")
+
     # If a checkpoint is found, load it
     if not kwargs["restart"] and checkPointData is not None:
         trainConfig, pathModel, pathTmpData = checkPointData

@@ -29,7 +29,7 @@ ls /mydata
 echo "copying your config file, $1, to your log dir: $logdir"
 cp $configfile $logdir  # copy the config file into the log directory 
 #RUNNING TRAIN COMMAND:
-python train.py --restart  ${namearg} -c $configfile -s 500 -l 200 > $logdir/stdout.txt 2>$logdir/stderr.txt &
+python train.py --restart  ${namearg} -c $configfile -s 50 -l 20 > $logdir/stdout.txt 2>$logdir/stderr.txt &
 echo "train.py --restart  ${namearg} -c $configfile -s 500 -l 200 > $logdir/stdout.txt 2>$logdir/stderr.txt"
 echo "...To watch the stderr output, run: "
 echo "    tail -f $logdir/stderr.txt "

@@ -33,7 +33,7 @@ class GANTrainer():
                  pathAttribDict=None,
                  selectedAttributes=None,
                  imagefolderDataset=False,
-                 ignoreAttribs=False,
+                 ignoreAttribs=False, 
                  nSamples=10,
                  **kargs):
         r"""

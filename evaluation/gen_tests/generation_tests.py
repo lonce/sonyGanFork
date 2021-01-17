@@ -24,7 +24,7 @@ class StyleGEvaluationManager(object):
         gen_batch = self.model.test(self.ref_rand_z,
                                toCPU=True,
                                getAvG=self.get_avg)
-        return gen_batch
+        return gen_batch, self.ref_rand_z #LW - added return of batch of latents
 
     def test_single_pitch_random_z(self, pitch=55):
         input_z = self.ref_rand_z.clone()
@@ -77,7 +77,7 @@ class StyleGEvaluationManager(object):
         if self.att_dim > 0:
             z[:, -self.att_dim:] = torch.zeros(self.att_dim)
 
-        if "pitch" in self.att_manager.keyOrder:
+        if self.att_manager and "pitch" in self.att_manager.keyOrder:
             pitch_att_dict = self.att_manager.inputDict['pitch']
             pitch_att_indx = pitch_att_dict['order']
             pitch_att_size = self.att_manager.attribSize[pitch_att_indx]

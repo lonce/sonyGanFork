@@ -123,6 +123,7 @@ class BaseGAN():
 
         self.config.latentVectorDim = self.config.noiseVectorDim \
             + self.config.categoryVectorDim_G
+        print(f"latentVectorDim ({self.config.latentVectorDim}) = noiseVectorDim ({self.config.noiseVectorDim}) + categoryVectorDim_G ({self.config.categoryVectorDim_G})")
 
         # Loss criterion
         self.config.lossCriterion = lossMode
@@ -310,12 +311,14 @@ class BaseGAN():
         """
         if self.config.weightConditionD != 0 and \
                 not self.config.attribKeysOrder:
+            print("self.config.weightConditionD = {}".format(self.config.weightConditionD))
             raise AttributeError("If the weight on the conditional term isn't "
                                  "null, then a attribute dictionnery should be"
                                  " defined")
 
         if self.config.weightConditionG != 0 and \
                 not self.config.attribKeysOrder:
+            print("self.config.weightConditionG = {}".format(self.config.weightConditionG))
             raise AttributeError("If the weight on the conditional term isn't \
                                  null, then a attribute dictionnary should be \
                                  defined")
@@ -371,7 +374,7 @@ class BaseGAN():
         inputLatent = torch.randn(
             n_samples, self.config.noiseVectorDim).to(self.device)
         # HACK:
-        if skipAtts and all(k in self.ClassificationCriterion.skipAttDfake \
+        if skipAtts and self.ClassificationCriterion and all(k in self.ClassificationCriterion.skipAttDfake \
                 for k in self.ClassificationCriterion.keyOrder):
             return inputLatent, None
         #################

@@ -109,9 +109,15 @@ The experiments are defined in a configuration file with JSON format.
 ```
 # This is the config file for the 'best' nsynth run in the Sony Gan paper (as far as I can tell). 
 {
-    "name": "myTestOut", #outputfolder in ouput_path for checkpoints, and generation. **THIS SHOULD BE CHANGED FOR EVERY RUN YOU DO!!**  (unless you want to start your run from the latest checkpoint here). This field should actually be provided by a flag - not stuck in a configuration file!
+
+	#name - of outputfolder in ouput_path for checkpoints, and generation. **THIS SHOULD BE CHANGED FOR EVERY RUN YOU DO!!**  (unless you want to start your run from the latest checkpoint here). This field should actually be provided by a flag - not stuck in a configuration file!
+    "name": "myTestOut", 
+    
     "comments": "fixed alpha_configuration",
-    "output_path": "output",  # Used for preprocessed data and checkpoints. These files can be **BIG** - make sure you have space whereever you put it. On NUS machines, consider using /hpctmp/user_name/foo...
+    
+    # output_path - used for preprocessed data and checkpoints. These files can be **BIG** - make sure you have space whereever you put it. On NUS machines, consider using /hpctmp/user_name/foo...
+    "output_path": "output",   
+    
     "loaderConfig": {
         "data_path": "/mydata/nsynth-train/audio", # Path to audio data. ('mydata' matches the mount point in the 'docker run' command above.)
         "att_dict_path": "/mydata/nsynth-train/examples.json", # Path to meta data file
@@ -121,7 +127,7 @@ The experiments are defined in a configuration file with JSON format.
 
         # I *think* this is just used to filter the files used for training
         "attribute_list": ["pitch"], #the 'conditioning' param used for the GAN
-        "pitch_range": [44, 70], #the full range of pitches in the nsynth db
+        "pitch_range": [44, 70], # only data with conditioning param labels in this range will be used for training
         "load_metadata": true,
 
         # not sure why this is here. Instances that match filter critera are counted in code
@@ -143,7 +149,7 @@ The experiments are defined in a configuration file with JSON format.
     },
     "modelConfig": {
         "formatLayerType": "gansynth",
-        "ac_gan": true,
+        "ac_gan": true,  #if false, latent vector is not augmented with labels
         "downSamplingFactor": [
             [16, 16],
             [8, 8],
@@ -178,7 +184,7 @@ The experiments are defined in a configuration file with JSON format.
         # from original AC-GAN paper nad Nistal paper
         "weightConditionG": 10.0, #in AC-GAN, weight of the classification loss applied to the generator
         "weightConditionD": 10.0, #in AC-GAN, weight of the classification loss applied to the discriminator
-        # used for conditional training
+        # not sure why this is necessary....
         "attribKeysOrder": {
             "pitch": 0
         },

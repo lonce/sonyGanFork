@@ -71,6 +71,9 @@ class ProgressiveGAN(BaseGAN):
         self.config.output_shape = kwargs.get('output_shape')
         self.config.scaleSizes = self.initScaleShapes(kwargs.get('downSamplingFactor'))
         self.config.transposed = transposed
+
+        print(f"ProgressiveGAN: will init BaseGAN with dimLatentVector = {dimLatentVector}")
+
         BaseGAN.__init__(self, dimLatentVector, **kwargs)
 
     def initScaleShapes(self, downSamplingFactor):
