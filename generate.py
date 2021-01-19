@@ -18,6 +18,22 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--midi', help='Path to midi file',
                         type=str, dest="midi", default="./test_midi_files/midi_furelisa_adapted.mid")
     
+    #These are all for 2D generation 
+    parser.add_argument('--p0', help='param0 for endpoint of dimension 1 (for 2D)',
+                        type=int, dest="p0", default=55)
+    parser.add_argument('--p1', help='param1 for endpoint of dimension 1 (for 2D)',
+                        type=int, dest="p1", default=55)
+    parser.add_argument('--z0', help='z0 filename (for 2D)',
+                        type=str, dest="z0", default="./output/z0.txt")
+    parser.add_argument('--z1', help='z1 filename (for 2D)',
+                        type=str, dest="z1", default="./output/z1.txt")
+    parser.add_argument('--d1', help='discretization along first dimension, p0...p1, including endpoint (for 2D)' ,
+                        type=int, dest="d1", default=13)
+    parser.add_argument('--d2', help='discretization along second dimension z0...z1, including endpoint (for 2D)',
+                        type=int, dest="d2", default=10)
+
+
+
 
     if len(sys.argv) > 1 and sys.argv[1] in ['-h', '--help']:
         parser.print_help()

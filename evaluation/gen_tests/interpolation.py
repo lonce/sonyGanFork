@@ -26,11 +26,13 @@ def generate(parser):
     # Create evaluation manager
     eval_manager = StyleGEvaluationManager(model, n_gen=100)
 
-    gen_batch = eval_manager.test_single_pitch_latent_interpolation()
+    gen_batch, latents = eval_manager.test_single_pitch_latent_interpolation()
     output_path = mkdir_in_path(output_dir, f"one_z_pitch_sweep")
     audio_out = map(postprocess, gen_batch)
+    
     saveAudioBatch(audio_out,
                    path=output_path,
                    basename='test_pitch_sweep', 
-                   sr=config["transformConfig"]["sample_rate"])
+                   sr=config["transformConfig"]["sample_rate"],
+                   latents=latents)
     print("FINISHED!\n")

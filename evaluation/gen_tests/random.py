@@ -23,11 +23,11 @@ def generate(parser):
     output_dir = mkdir_in_path(output_dir, "random")
     output_dir = mkdir_in_path(output_dir, datetime.now().strftime('%Y-%m-%d %H:%M'))
     
-    
     # Create evaluation manager
     eval_manager = StyleGEvaluationManager(model, n_gen=100)
 
     gen_batch, latents = eval_manager.test_random_generation()
+
     audio_out = map(postprocess, gen_batch)
 
     saveAudioBatch(audio_out,

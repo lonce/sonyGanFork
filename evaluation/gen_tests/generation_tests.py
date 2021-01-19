@@ -48,7 +48,7 @@ class StyleGEvaluationManager(object):
             input_z[:, self.latent_noise_dim + att_shift + pitch_indx] = 1
 
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
-        return gen_batch
+        return gen_batch, input_z
 
     def test_single_z_pitch_sweep(self):
         if "pitch" not in self.att_manager.keyOrder: 
@@ -70,12 +70,21 @@ class StyleGEvaluationManager(object):
             input_z.append(z)
         input_z = torch.stack(input_z)
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
-        return gen_batch
+        return gen_batch, input_z
 
-    def test_single_pitch_latent_interpolation(self, pitch=55):
+    def test_single_pitch_latent_interpolation(self, pitch=55, z0=None, z1=None, steps=None):
         z = self.ref_rand_z[:2, :].clone()
+        if z0 != None :
+            z[0,:]=z0
+        if z1 != None :
+            z[1,:]=z1
         if self.att_dim > 0:
             z[:, -self.att_dim:] = torch.zeros(self.att_dim)
+
+        if steps==None : 
+            steps=self.n_iterp_steps
+
+        print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
 
         if self.att_manager and "pitch" in self.att_manager.keyOrder:
             pitch_att_dict = self.att_manager.inputDict['pitch']
@@ -90,14 +99,21 @@ class StyleGEvaluationManager(object):
             z[:, self.latent_noise_dim + pitch_indx] = 1
         
         input_z = []
-        for i in linspace(0., 1., self.n_iterp_steps, True):
+        for i in linspace(0., 1., steps, True):
             input_z.append((1-i)*z[0] + i*z[1])
             # z /= abs(z)
         input_z = torch.stack(input_z)
+
+        print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")
+
+
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
-        return gen_batch
+        return gen_batch, input_z
+
+
 
     def test_single_pitch_sph_latent_interpolation(self, pitch=55):
+
         def get_rand_gaussian_outlier(ndim):
             r = 3
             ph = 2 * np.pi * np.random.rand(ndim)
@@ -112,6 +128,8 @@ class StyleGEvaluationManager(object):
                 else:
                     vector += [np.prod(sin[:i]) * cos[i]]
             input_z = []
+            
+            # LW: Interpolating the radius??? This isn't spherical interpolation....
             for i in linspace(r, -1*r, self.n_iterp_steps, True):
                 input_z.append(torch.from_numpy(np.multiply(i, vector).astype(float)))
             return input_z
@@ -135,9 +153,13 @@ class StyleGEvaluationManager(object):
         # input_z = torch.stack(z)
 
         gen_batch = self.model.test(input_z.float(), toCPU=True, getAvG=True)
-        return gen_batch
+        return gen_batch, input_z.float()
 
-    def test_single_pitch_sph_surface_interpolation(self, pitch=55):
+
+        # I don't think this works the way it should.
+        # First, the angle ranges from x to x+2pi
+        # Secondly, it doesn't seeme to map out the shortest arc, but looks rather like a multidimensions lissajou function. 
+    def test_single_pitch_2point_sph_surface_interpolation(self, pitch=55, z0=None, z1=None, steps=None):
 
         r = 1
         ph = 2 * np.pi * np.random.rand(self.latent_noise_dim)
@@ -177,4 +199,79 @@ class StyleGEvaluationManager(object):
         # input_z = torch.stack(input_z)
 
         gen_batch = self.model.test(input_z.float(), toCPU=True, getAvG=True)
-        return gen_batch
+        return gen_batch, input_z.float()
+
+
+
+
+
+
+
+
+
+        #Here is my two-point spherical interpolation. which interpolated radius and angle between arbitrary points
+
+    def qslerp(self, pitch=55, z0=None, z1=None, steps=None):
+        if z0 != None :
+            z0=z0[:self.latent_noise_dim]
+        if z1 != None :
+            z1=z1[:self.latent_noise_dim]
+        if steps==None : 
+            steps=self.n_iterp_steps
+
+        # Normalize to avoid undefined behavior.
+        r0=torch.norm(z0)
+        r1=torch.norm(z1)
+
+        print(f"Input Norms z0={r0} and z1={r1}")
+        
+        z0=z0/r0
+        z1=z1/r1
+        
+        d=torch.dot(z0,z1)
+        absD=torch.norm(d)
+
+        #theta is the angle between the vectors
+        theta = torch.acos(absD)
+        sinTheta = torch.sin(theta)
+
+        z=[]
+        #for t in np.arange(0, 1., 1./steps):
+        for t in linspace(0., 1., steps, True):
+            scale0 = torch.sin((1.0 - t) * theta) / sinTheta;
+            scale1 = torch.sin((t * theta)) / sinTheta;
+
+            rscale=(1.0 - t)*r0+t*r1
+
+            #If the dot product is negative, slerp won't take
+            #the shorter path. Correct by negating the scale
+            if d<0 :
+                scale1 = -scale1
+                
+            z.append(rscale*(scale0 * z0 + scale1 * z1))
+            
+        z = torch.stack(z)
+        print(f"z is on device {z.get_device()}")
+
+        print(f"Output norms z0={torch.norm(z[0])} and z1={torch.norm(z[steps-1])}")
+
+        if self.att_dim > 0:
+
+            #z = torch.stack(z).double()
+            z = torch.cat([z, torch.zeros((z.size(0), self.att_dim)).cuda().double()], dim=1)
+
+        if "pitch" in self.att_manager.keyOrder:
+            pitch_att_dict = self.att_manager.inputDict['pitch']
+            pitch_att_indx = pitch_att_dict['order']
+            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+            try:
+                pitch_indx = \
+                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+            except ValueError:
+                pitch_indx = randint(pitch_att_size)
+            
+            z[:, self.latent_noise_dim + pitch_indx] = 1
+        # input_z = torch.stack(input_z)
+
+        gen_batch = self.model.test(z.float(), toCPU=True, getAvG=True)
+        return gen_batch, z.float()
