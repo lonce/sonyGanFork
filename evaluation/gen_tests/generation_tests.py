@@ -26,6 +26,24 @@ class StyleGEvaluationManager(object):
                                getAvG=self.get_avg)
         return gen_batch, self.ref_rand_z #LW - added return of batch of latents
 
+    #this function creates a different nonlinear interpolation for each paramter.
+    # Each has a different rate at all times, is linear at a differnt point in time, and are maximally spread out at the midpoint
+    # spread_interp(dims,t) returns a vectore of len=dims for one point in time
+    def spread_interp(self,dims,t) : #spread across all dimensions at a particular time point, t in [0,1] 
+        midpoint = int(dims/2)
+        spreadvec=np.zeros(dims) #output
+        
+        powers=np.linspace(5,1,midpoint+1, True)
+        for d in range(midpoint) :
+            spreadvec[d]= np.power(t, powers[d])
+            spreadvec[dims-d-1]= 1-np.power(1-t, powers[d])
+        # if dims is odd, do dim {midpoint+1} 
+        if dims%2 :
+            #print(f"dims is odd, do dim {midpoint+1}")
+            spreadvec[midpoint]= np.power(t, powers[midpoint])
+        
+        return spreadvec
+
     def test_single_pitch_random_z(self, pitch=55):
         input_z = self.ref_rand_z.clone()
         input_z[:, -self.att_dim:] = torch.zeros(self.att_dim)
@@ -84,7 +102,7 @@ class StyleGEvaluationManager(object):
         if steps==None : 
             steps=self.n_iterp_steps
 
-        print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
+        #print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
 
         if self.att_manager and "pitch" in self.att_manager.keyOrder:
             pitch_att_dict = self.att_manager.inputDict['pitch']
@@ -100,11 +118,54 @@ class StyleGEvaluationManager(object):
         
         input_z = []
         for i in linspace(0., 1., steps, True):
+        #for i in linspace(-1., 1., steps, True):  #nonlinear interpolation (slow down in the middle)
+            #ii=(i*i*i+1)/2                        # [-1,1] -> [0,1]
             input_z.append((1-i)*z[0] + i*z[1])
             # z /= abs(z)
         input_z = torch.stack(input_z)
 
-        print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")
+        #print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")
+
+
+        gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
+        return gen_batch, input_z
+
+
+    def test_single_pitch_latent_staggered_interpolation(self, pitch=55, z0=None, z1=None, steps=None):
+        z = self.ref_rand_z[:2, :].clone()
+        if z0 != None :
+            z[0,:]=z0
+        if z1 != None :
+            z[1,:]=z1
+        if self.att_dim > 0:
+            z[:, -self.att_dim:] = torch.zeros(self.att_dim)
+
+        if steps==None : 
+            steps=self.n_iterp_steps
+
+        #print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
+
+        if self.att_manager and "pitch" in self.att_manager.keyOrder:
+            pitch_att_dict = self.att_manager.inputDict['pitch']
+            pitch_att_indx = pitch_att_dict['order']
+            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+            try:
+                pitch_indx = \
+                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+            except ValueError:
+                pitch_indx = randint(pitch_att_size)
+            
+            z[:, self.latent_noise_dim + pitch_indx] = 1
+        
+        input_z = []
+
+        for i in linspace(0., 1., steps, True):  #nonlinear interpolation (slow down in the middle)
+            spread_i=self.spread_interp(len(z0),i)
+            input_z.append(torch.from_numpy(1-spread_i).cuda().float()*z[0] + torch.from_numpy(spread_i).cuda().float()*z[1])
+            # z /= abs(z)
+        input_z = torch.stack(input_z)
+
+        #print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")
 
 
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
@@ -238,6 +299,11 @@ class StyleGEvaluationManager(object):
         z=[]
         #for t in np.arange(0, 1., 1./steps):
         for t in linspace(0., 1., steps, True):
+
+        #for i in linspace(-1., 1., steps, True):  #nonlinear interpolation (slow down in the middle)
+            #t=(i*i*i+1)/2                        # [-1,1] -> [0,1]
+
+
             scale0 = torch.sin((1.0 - t) * theta) / sinTheta;
             scale1 = torch.sin((t * theta)) / sinTheta;
 

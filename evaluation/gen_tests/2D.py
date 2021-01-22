@@ -34,10 +34,15 @@ def generate(parser):
 
     for p in range(int(argsObj["p0"]), int(argsObj["p1"])+1) :
         print(f"generate interps for {p}")
+        
         # linear
         #gen_batch, latents = eval_manager.test_single_pitch_latent_interpolation(pitch=p, z0=z0, z1=z1, steps=10)
-        gen_batch, latents = eval_manager.qslerp(pitch=p, z0=z0, z1=z1, steps=10)
-        # sperical
+        #sperical
+        #gen_batch, latents = eval_manager.qslerp(pitch=p, z0=z0, z1=z1, steps=10)
+        #staggred
+        gen_batch, latents = eval_manager.test_single_pitch_latent_staggered_interpolation(pitch=p, z0=z0, z1=z1, steps=10)
+
+
         audio_out = map(postprocess, gen_batch)
 
         saveAudioBatch(audio_out,
