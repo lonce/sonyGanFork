@@ -3,7 +3,7 @@ from random import randint
 import torch
 import torch.nn.functional as F
 import numpy as np
-
+import pdb
 
 class ACGANCriterion:
     r"""
@@ -216,6 +216,7 @@ class ACGANCriterion:
             Lc = | Multi label soft margin loss for the class c if c is
                    attached to a tagging task
         """
+        #pdb.set_trace()
         loss = 0
         shiftInput = 0
         shiftTarget = 0

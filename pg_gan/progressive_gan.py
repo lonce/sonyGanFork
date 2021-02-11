@@ -1,6 +1,6 @@
 import torch.optim as optim
 import torch.nn as nn
-
+import pdb
 from .base_GAN import BaseGAN
 from utils.config import BaseConfig
 from .progressive_conv_net import GNet, DNet
@@ -71,9 +71,6 @@ class ProgressiveGAN(BaseGAN):
         self.config.output_shape = kwargs.get('output_shape')
         self.config.scaleSizes = self.initScaleShapes(kwargs.get('downSamplingFactor'))
         self.config.transposed = transposed
-
-        print(f"ProgressiveGAN: will init BaseGAN with dimLatentVector = {dimLatentVector}")
-
         BaseGAN.__init__(self, dimLatentVector, **kwargs)
 
     def initScaleShapes(self, downSamplingFactor):
@@ -269,6 +266,7 @@ class ProgressiveGAN(BaseGAN):
         lossDFake = self.lossCriterion.getCriterion(predFakeD, False)
         allLosses["lossD_fake"] = lossDFake.item()
         lossD += lossDFake
+        #pdb.set_trace()
 
         # #3 WGAN Gradient Penalty loss
         if self.config.lambdaGP > 0:
@@ -317,6 +315,7 @@ class ProgressiveGAN(BaseGAN):
 
         # #1 Image generation
         inputLatent, targetCatNoise = self.buildNoiseData(batch_size, self.realLabels, skipAtts=True)
+#        pdb.set_trace()
 
         if getattr(self.config, 'style_mixing', False):
             inputLatent2, targetRandCat2 = self.buildNoiseData(batch_size, self.realLabels, skipAtts=True)

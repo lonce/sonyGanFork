@@ -7,6 +7,8 @@ logs/*
 #ignore folders in the output directory
 /output/*
 
+paramManager/
+
 scratch/
 
 # Byte-compiled / optimized / DLL files

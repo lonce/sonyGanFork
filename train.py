@@ -3,7 +3,7 @@ import os
 import sys
 import importlib
 import argparse
-
+import pdb
 import time
 
 from utils.utils import getVal, getLastCheckPoint, loadmodule, GPU_is_available, checkexists_mkdir, mkdir_in_path
@@ -11,7 +11,7 @@ from utils.config import getConfigOverrideFromParser, updateParserWithConfig
 
 from pg_gan.progressive_gan_trainer import ProgressiveGANTrainer
 from data.preprocessing import AudioPreprocessor
-from data.nsynth import NSynthLoader
+#from data.dataloader import CommonDataLoader
 from numpy import random
 import torch
 import torch.backends.cudnn as cudnn
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         data_config[item] = val
 
     exp_name = kwargs['name'] 
-    if exp_name is "default":  # argument overrides config file for name
+    if exp_name == "default":  # argument overrides config file for name
         exp_name = config.get("name", "default")
     checkPointDir = config["output_path"]
     checkPointDir = mkdir_in_path(checkPointDir, exp_name)
@@ -116,7 +116,12 @@ if __name__ == "__main__":
     print("Data manager configuration")
     data_manager = AudioPreprocessor(**config['transformConfig'])
 
-    data_loader = NSynthLoader(dbname=f"NSynth_{data_manager.transform}",
+    # CONFIG DATALOADER
+    dataloader_filename = config["loaderConfig"]["dataloader"]["filename"]
+    dataloader_classname = config["loaderConfig"]["dataloader"]["classname"]
+    module = importlib.import_module("data." + dataloader_filename)
+    dataloader_class = getattr(module,dataloader_classname)
+    data_loader = dataloader_class(dbname=f"Texture_{data_manager.transform}",
                                output_path=checkPointDir,
                                preprocessing=data_manager.get_preprocessor(),
                                **config['loaderConfig'])
@@ -138,8 +143,6 @@ if __name__ == "__main__":
                                saveIter= baseArgs.saveIter,
                                nSamples=nSamples,
                                config=model_config)
-
-    print(f"MODEL_CONFIG: {model_config}")
 
     # If a checkpoint is found, load it
     if not kwargs["restart"] and checkPointData is not None:

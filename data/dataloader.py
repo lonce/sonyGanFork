@@ -3,8 +3,8 @@ import os.path
 import dill
 import torch.utils.data as data
 import torch
-from utils.utils import mkdir_in_path, read_json, filter_keys_in_strings, list_files_abs_path, get_filename
-
+from utils.utils import mkdir_in_path, read_json, filter_keys_in_strings, list_files_abs_path, get_filename,filter_keys_in_json
+import pdb
 import numpy as np
 
 from .db_stats import buildKeyOrder
@@ -36,7 +36,6 @@ class DataLoader(data.Dataset):
                  shuffle=False,
                  **kargs):
         data.Dataset.__init__(self)
-
         self.data = []
         self.metadata = []
 
@@ -76,7 +75,8 @@ class DataLoader(data.Dataset):
             # Preprocessing:
             if self.preprocessing and self._preprocess: 
                 self.preprocess()
-            torch.save(self, self.pt_file_path, pickle_module=dill)
+            #pdb.set_trace()
+            #torch.save(self, self.pt_file_path, pickle_module=dill)
             print(f"Dataset saved.")
         print("Dataset loaded!")
 
@@ -114,7 +114,6 @@ class DataLoader(data.Dataset):
         filtered_files = self.filter_files(files)
         for file in filtered_files:
             self.read_item(file)
-
         self.sort_att_dict_list()
         self.get_att_shift_dict()
 
@@ -152,54 +151,42 @@ class AudioDataLoader(DataLoader):
         DataLoader.__init__(self, dbname=dbname, _format=_format, **kargs)
 
 
-class NSynthLoader(AudioDataLoader):
+class CommonDataLoader(AudioDataLoader):
 
-    ATT_DICT = {
-        "instrument_source": ['acoustic', 'electronic', 'synthetic'],
-        "instrument_family": [
-            'bass', 'brass', 'flute','guitar', 'keyboard',
-            'mallet', 'organ', 'reed', 'string', 'synth_lead', 'vocal'
-        ],
-        "instrument": [f'_{i}' for i in range(1006)],
-        # "pitch":      [midi2str(i) for i in range(0, 121)],
-        "velocity":   [f'_{i}' for i in range(0, 128)],
-        "qualities": [
-            "bright", "dark", "distortion", "fast_decay",
-            "long_release", "multiphonic", "nonlinear_env",
-            "percussive", "reverb", "tempo-synced"
-        ]
-
-    }
+    #ATT_DICT = {
+    #    "sound_source": ['natural','generated'],
+    #    "sound_name": [
+    #        'popTexture'
+    #    ],
+    #}
     def __init__(self,
                  att_dict_path,
                  dbname="default",
-                 attribute_list=["instrument", "pitch"],
-                 instrument_labels=["bass"],
-                 pitch_range=[24, 84],
-                 filter_keys=["acoustic"],
-                 balanced_data=True,
+                 attribute_list=[],
+                 filter_keys={},
+                 balanced_data=False,
                  **kargs):
 
         assert os.path.exists(att_dict_path), \
             f"Metadata file {att_dict_path} dosn't exist"
 
-        self.instrument_labels = \
-            self.ATT_DICT["instrument_family"] if \
-            instrument_labels in [[], ["all"]] else \
-            instrument_labels
+        #self.instrument_labels = \
+        #    self.ATT_DICT["sound_name"] if \
+        #    instrument_labels in [[], ["all"]] else \
+        #    instrument_labels
 
         dbname += "_"
-        for l in self.instrument_labels:
-            dbname += f"{l[0]}"
-
+        #for l in self.instrument_labels:
+        #    dbname += f"{l[0]}"
         self.size = kargs.get('size', -1)
         self.attribute_list = attribute_list
         self.att_dict = read_json(att_dict_path)
         self.balanced_data = balanced_data
-        self.n_items_cls = int(self.size / len(self.instrument_labels))
-        self.inst_count = {k: 0 for k in self.instrument_labels}
+        #self.n_items_cls = int(self.size) #int(self.size / len(self.instrument_labels))
+        #self.inst_count = {k: 0 for k in self.instrument_labels}
         self.filter = filter_keys
-        self.pitch_range = pitch_range
+        #self.pitch_range = pitch_range
+
         
         # Not sure yet about these params
         self.att_dict_list = {}
@@ -209,10 +196,11 @@ class NSynthLoader(AudioDataLoader):
 
         self.count_attributes()
 
-        print("N-Synth loader finished.")
-        print("Instrument count:")
-        print(self.inst_count)
+        print("Texture loader finished.")
+        print("Sound count:")
+        #print(self.inst_count)
         print("")
+        #pdb.set_trace()
         self.size = len(self.data)
         del self.att_dict
         # self.get_att_class_list()
@@ -223,6 +211,7 @@ class NSynthLoader(AudioDataLoader):
                 self.att_count[att][np.where(np.array(self.att_dict_list[att]) == val)[0][0]] += 1
 
         self.att_count = {}
+        #pdb.set_trace()
         for att, vals in self.att_dict_list.items():
             if att not in self.att_count:
                 self.att_count[att] = [0] * len(vals)
@@ -261,12 +250,19 @@ class NSynthLoader(AudioDataLoader):
     def meets_requirements(self, att_dict):
         # TO-DO: check balance of instruments
         # Check range of pitches
-        inst = att_dict['instrument_family_str']
+        if not len(self.data)>self.size:
+            return True
+        return False
+
+    def meets_requirements_old(self, att_dict):
+        # TO-DO: check balance of instruments
+        # Check range of pitches
+        inst = att_dict['sound_name']
         if inst in self.inst_count.keys() and self.inst_count[inst] <= self.n_items_cls:
             if self.pitch_range in [[], ["all"]]:
                 self.inst_count[inst] += 1
                 return True
-            elif self.pitch_range[0] <= att_dict['pitch'] <= self.pitch_range[1] \
+            elif self.pitch_range[0] <= att_dict['midi_num'] <= self.pitch_range[1] \
             and not sum(self.inst_count.values()) >= self.size:  
                 self.inst_count[inst] += 1
                 return True
@@ -275,13 +271,15 @@ class NSynthLoader(AudioDataLoader):
     def get_labels(self, batch_size):
         label_batch = []
         for att, att_count in self.att_count.items():
-
-            label_batch.append(torch.multinomial(torch.Tensor(att_count), batch_size))
+            label_batch.append(torch.as_tensor(list(np.zeros(batch_size,dtype=int))))
+#            label_batch.append(torch.multinomial(torch.Tensor(att_count), batch_size))
         return torch.stack(label_batch, dim=1)
 
     def read_item(self, item_path):
         item_atts = self.att_dict[get_filename(item_path)]
-        if self.meets_requirements(item_atts):
+        #item_atts = self.att_dict[item_path]
+        #labels = self.get_metadata(item_atts)
+        if self.meets_requirements(item_atts): #1 CG Edit
             labels = self.get_metadata(item_atts)
 
         # TO-DO: for the moment check_Data_balance only considers the
@@ -300,11 +298,11 @@ class NSynthLoader(AudioDataLoader):
         return specific_item_atts
 
     def filter_files(self, files):
-        if len(self.instrument_labels) > 0:
-            audio_paths = filter_keys_in_strings(files, self.instrument_labels)
         if len(self.filter) > 0:
-            audio_paths = filter_keys_in_strings(files, self.filter)
-        return audio_paths
+            #audio_paths = filter_keys_in_strings(files, self.filter)
+            audio_paths = filter_keys_in_json(files,self.att_dict,self.filter)
+            return audio_paths
+        return files
 
 
     def getKeyOrders(self, equlizationWeights=False):
@@ -346,7 +344,8 @@ class NSynthLoader(AudioDataLoader):
             - specificAttrib (list of string): if not None, specify which
                                                attributes should be selected
         """
-        if self.attribute_list is None:
+
+        if self.attribute_list is None or len(self.attribute_list)==0:
             atts = deepcopy(item_atts)
             self.attribute_list = item_atts.keys()
         else:

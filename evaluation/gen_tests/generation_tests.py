@@ -131,7 +131,7 @@ class StyleGEvaluationManager(object):
         return gen_batch, input_z
 
 
-    def test_single_pitch_latent_staggered_interpolation(self, pitch=55, z0=None, z1=None, steps=None):
+    def test_single_pitch_latent_staggered_interpolation(self, pitch=55, z0=None, z1=None, steps=None, d1nvar=1, d1var=.03):
         z = self.ref_rand_z[:2, :].clone()
         if z0 != None :
             z[0,:]=z0
@@ -160,9 +160,19 @@ class StyleGEvaluationManager(object):
         input_z = []
 
         for i in linspace(0., 1., steps, True):  #nonlinear interpolation (slow down in the middle)
-            spread_i=self.spread_interp(len(z0),i)
-            input_z.append(torch.from_numpy(1-spread_i).cuda().float()*z[0] + torch.from_numpy(spread_i).cuda().float()*z[1])
-            # z /= abs(z)
+
+            for nv in range(d1nvar):
+                if nv > 0 :   #the first one will be z unperturbed
+                    z[0,:self.latent_noise_dim]=z0[:self.latent_noise_dim]+torch.randn(self.latent_noise_dim).cuda()*d1var
+                    z[1,:self.latent_noise_dim]=z1[:self.latent_noise_dim]+torch.randn(self.latent_noise_dim).cuda()*d1var
+
+
+                spread_i=self.spread_interp(len(z0),i)
+                input_z.append(torch.from_numpy(1-spread_i).cuda().float()*z[0] + torch.from_numpy(spread_i).cuda().float()*z[1])
+                # z /= abs(z)
+
+
+
         input_z = torch.stack(input_z)
 
         #print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")

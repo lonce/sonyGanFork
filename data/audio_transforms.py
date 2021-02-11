@@ -68,8 +68,8 @@ def unfold_cqt(x):
         return torch.cat([mag1, mag2], dim=0).unsqueeze(0)
 
 def norm_audio(x):
-    if max(x) != 0:
-        return x/max(x)
+    if max(abs(x)) != 0:
+        return x/max(abs(x))
     else:
         return x
 

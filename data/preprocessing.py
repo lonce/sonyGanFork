@@ -10,7 +10,12 @@ from librosa.core import magphase
 import numpy as np
 from torch.nn.modules.padding import ConstantPad2d
 import librosa
-
+import pdb
+from tifresi.utils import load_signal
+from tifresi.utils import preprocess_signal
+from tifresi.stft import GaussTF, GaussTruncTF
+from tifresi.transforms import log_spectrogram
+from tifresi.transforms import inv_log_spectrogram
 
 # TO-DO: add function to get the output of the pipelin
 # on intermediate positions
@@ -23,7 +28,7 @@ class DataPreprocessor(object):
         the pre-processing transforms.
     """
     # define available audio transforms
-    AUDIO_TRANSFORMS = ["waveform", "stft", "mel", "cqt", "cq_nsgt", "specgrams", "mfcc"]
+    AUDIO_TRANSFORMS = ["waveform", "stft", "mel", "cqt", "cq_nsgt", "specgrams", "mfcc", "pghi"]
 
     def __init__(self,
                  transform=None,
@@ -95,7 +100,8 @@ class AudioPreprocessor(DataPreprocessor):
             "mel":       self.build_mel_pipeline,
             "cqt":       self.build_cqt_pipeline,
             "cq_nsgt":   self.build_cqt_nsgt_pipeline,
-            "mfcc":      self.build_mfcc_pipeline
+            "mfcc":      self.build_mfcc_pipeline,
+            "pghi":      self.build_pghi_pipeline
         }[self.transform]()
 
     def build_waveform_pipeline(self): 
@@ -298,7 +304,15 @@ class AudioPreprocessor(DataPreprocessor):
             self.pre_pipeline.append(fold_cqt)
             self.post_pipeline.insert(0, unfold_cqt)
             self.output_shape = (4, int(self.n_bins/2), int(self.n_frames))
-    
+
+    def build_pghi_pipeline(self):
+        self._pghi_init_stft_params()
+        self._pghi_add_audio_loader()
+        self._add_signal_zeropadding()
+        self._pghi_add_stft()
+        self.output_shape = (2, self.n_bins, self.n_frames)
+
+
     def _add_audio_loader(self):
         def loader(x):
             return librosa.core.load(
@@ -310,6 +324,13 @@ class AudioPreprocessor(DataPreprocessor):
             dtype=np.float32,
             res_type='kaiser_best')[0]  # We index 0 to remove the sample rate
         self.pre_pipeline.append(loader)
+
+    def _pghi_add_audio_loader(self):
+        def pghi_loader(x):
+            y, sr = load_signal(x)
+            y = preprocess_signal(y)
+            return y
+        self.pre_pipeline.append(pghi_loader)
 
     def _add_fade_out(self):
                 
@@ -344,6 +365,13 @@ class AudioPreprocessor(DataPreprocessor):
 
         self.n_bins = int(getattr(self, 'fft_size', 2048) / 2)
 
+    def _pghi_init_stft_params(self):
+        if not hasattr(self, 'hop_size'):
+            self.hop_size = int(getattr(self, 'stft_channels', 512) / 2)
+        if hasattr(self, 'n_frames'):
+            self.audio_length = self.n_frames * self.hop_size
+        self.n_bins = int(getattr(self, 'stft_channels', 512) / 2)+1
+
     def _add_stft(self):
         def stft(x):
             return librosa.core.stft(
@@ -358,6 +386,32 @@ class AudioPreprocessor(DataPreprocessor):
                     win_length=getattr(self, 'win_size', 1024))
         self.pre_pipeline.append(stft)
         self.post_pipeline.insert(0, istft)
+
+    def _pghi_add_stft(self):
+        def pghi_stft(x):
+            use_truncated_window = True
+            if use_truncated_window:
+                stft_system = GaussTruncTF(hop_size=getattr(self, 'hop_size', 256), stft_channels=getattr(self, 'stft_channels', 512))
+            else:
+                stft_system = GaussTF(hop_size=getattr(self, 'hop_size', 256), stft_channels=getattr(self, 'stft_channels', 512))
+            Y = stft_system.spectrogram(x)
+            log_Y= log_spectrogram(Y)
+            return np.expand_dims(log_Y,axis=0)
+            #return log_Y
+
+        def pghi_istft(x):
+            use_truncated_window = True
+            if use_truncated_window:
+                stft_system = GaussTruncTF(hop_size=getattr(self, 'hop_size', 256), stft_channels=getattr(self, 'stft_channels', 512))
+            else:
+                stft_system = GaussTF(hop_size=getattr(self, 'hop_size', 256), stft_channels=getattr(self, 'stft_channels', 512))
+
+            x = np.squeeze(x.numpy(),axis=0)
+            new_Y = inv_log_spectrogram(x)
+            new_y = stft_system.invert_spectrogram(new_Y)
+            return new_y
+        self.pre_pipeline.append(pghi_stft)
+        self.post_pipeline.insert(0, pghi_istft)
 
     def _add_mag_phase(self):
         # Add complex to mag/ph transform

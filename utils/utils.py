@@ -6,6 +6,7 @@ from math import inf
 from librosa.output import write_wav
 import torch
 from torch.nn.functional import interpolate
+import pdb
 
 def checkexists_mkdir(path):
     if not os.path.exists(path):
@@ -34,6 +35,35 @@ def filter_files_in_path(dir_path, format='.wav'):
 
 def list_files_abs_path(dir_path, format='.wav'):
     return [os.path.join(os.path.abspath(dir_path), x) for x in filter_files_in_path(dir_path, format)]
+
+def has_datatype(list_array,typ):
+    for val in list_array:
+        if isinstance(val,typ):
+            return True
+        else:
+            return False
+
+def filter_keys_in_json(files,att_dict,filter_keys): #CG: to generalize dataloading
+    filtered_filenames = []
+    filename_keys = att_dict.keys()
+    for fkey in filename_keys:
+        attr_keys = att_dict[fkey].keys()
+        break
+    for k in filter_keys.keys():
+        filter_range_list = filter_keys[k]
+        if len(filter_range_list) == 2 and has_datatype(filter_range_list,int): #We assume that if there are two int type entries, then it specifies a range
+            filter_range_list = range(filter_range_list[0],filter_range_list[1])
+        if k in attr_keys:
+            for fkey in filename_keys:
+                attr_val = att_dict[fkey][k]
+                if attr_val in filter_range_list:
+                    filtered_filenames.append(fkey)
+        else:
+            print("Filter key "+k+" not present in the dataset. Please check!")
+    abs_filtered_filenames = filter(lambda x: any([k in x for k in filtered_filenames]),files)
+    return abs_filtered_filenames    
+
+
 
 def filter_keys_in_strings(strings, keys):
     return filter(lambda x: any([k in x for k in keys]), strings)
@@ -513,3 +543,13 @@ class ResizeWrapper():
             image = image.numpy()
         out = interpolate(torch.from_numpy(image).unsqueeze(0), size=self.size).squeeze(0)
         return out
+
+def makesteps(times, vals) :
+    assert len(times) == len(vals)+1
+    outtimes=[] # =np.zeros(2*len(times))
+    outvals=[] # =np.zeros(2*len(times))
+
+    for i in range(len(times)-1) :
+        outtimes=np.append(outtimes, [times[i],times[i+1]-.000001])
+        outvals=np.append(outvals, [vals[i], vals[i]])
+    return outtimes, outvals

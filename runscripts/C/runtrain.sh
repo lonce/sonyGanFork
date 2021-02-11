@@ -24,8 +24,8 @@ WD=${PWD##*/}
 
 logdir=logs/logs_$D
 mkdir -p $logdir
-echo "LISTING of /mydata: "
-ls /mydata
+echo "LISTING of .: "
+ls .
 echo "copying your config file, $1, to your log dir: $logdir"
 cp $configfile $logdir  # copy the config file into the log directory 
 #RUNNING TRAIN COMMAND:

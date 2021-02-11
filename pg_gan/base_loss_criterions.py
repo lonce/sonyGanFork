@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import pdb
 
 class BaseLossWrapper:
     r"""
@@ -63,6 +64,7 @@ class WGANGP(BaseLossWrapper):
         BaseLossWrapper.__init__(self, device)
 
     def getCriterion(self, input, status):
+        #pdb.set_trace()
         if status:
             return -input[:, -1].sum()
         return input[:, -1].sum() # This in some sources is sum() / we used mean before

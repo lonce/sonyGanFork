@@ -4,7 +4,7 @@ import dill
 import torch.utils.data as data
 import torch
 from utils.utils import mkdir_in_path, read_json, filter_keys_in_strings, list_files_abs_path, get_filename
-
+import pdb
 import numpy as np
 
 from .db_stats import buildKeyOrder
@@ -76,7 +76,7 @@ class DataLoader(data.Dataset):
             # Preprocessing:
             if self.preprocessing and self._preprocess: 
                 self.preprocess()
-            torch.save(self, self.pt_file_path, pickle_module=dill)
+            #torch.save(self, self.pt_file_path, pickle_module=dill)
             print(f"Dataset saved.")
         print("Dataset loaded!")
 
@@ -152,46 +152,35 @@ class AudioDataLoader(DataLoader):
         DataLoader.__init__(self, dbname=dbname, _format=_format, **kargs)
 
 
-class NSynthLoader(AudioDataLoader):
+class TextureLoader(AudioDataLoader):
 
     ATT_DICT = {
-        "instrument_source": ['acoustic', 'electronic', 'synthetic'],
-        "instrument_family": [
-            'bass', 'brass', 'flute','guitar', 'keyboard',
-            'mallet', 'organ', 'reed', 'string', 'synth_lead', 'vocal'
+        "sound_source": ['natural','generated'],
+        "sound_name": [
+            'popTexture'
         ],
-        "instrument": [f'_{i}' for i in range(1006)],
-        # "pitch":      [midi2str(i) for i in range(0, 121)],
-        "velocity":   [f'_{i}' for i in range(0, 128)],
-        "qualities": [
-            "bright", "dark", "distortion", "fast_decay",
-            "long_release", "multiphonic", "nonlinear_env",
-            "percussive", "reverb", "tempo-synced"
-        ]
-
     }
     def __init__(self,
                  att_dict_path,
                  dbname="default",
-                 attribute_list=["instrument", "pitch"],
-                 instrument_labels=["bass"],
-                 pitch_range=[24, 84],
-                 filter_keys=["acoustic"],
-                 balanced_data=True,
+                 attribute_list=["midi_num"],
+                 instrument_labels=["popTexture"],
+                 pitch_range=[69, 81],
+                 filter_keys=[],
+                 balanced_data=False,
                  **kargs):
 
         assert os.path.exists(att_dict_path), \
             f"Metadata file {att_dict_path} dosn't exist"
 
         self.instrument_labels = \
-            self.ATT_DICT["instrument_family"] if \
+            self.ATT_DICT["sound_name"] if \
             instrument_labels in [[], ["all"]] else \
             instrument_labels
 
         dbname += "_"
         for l in self.instrument_labels:
             dbname += f"{l[0]}"
-
         self.size = kargs.get('size', -1)
         self.attribute_list = attribute_list
         self.att_dict = read_json(att_dict_path)
@@ -200,6 +189,7 @@ class NSynthLoader(AudioDataLoader):
         self.inst_count = {k: 0 for k in self.instrument_labels}
         self.filter = filter_keys
         self.pitch_range = pitch_range
+
         
         # Not sure yet about these params
         self.att_dict_list = {}
@@ -209,10 +199,11 @@ class NSynthLoader(AudioDataLoader):
 
         self.count_attributes()
 
-        print("N-Synth loader finished.")
-        print("Instrument count:")
+        print("Texture loader finished.")
+        print("Sound count:")
         print(self.inst_count)
         print("")
+        #pdb.set_trace()
         self.size = len(self.data)
         del self.att_dict
         # self.get_att_class_list()
@@ -261,12 +252,12 @@ class NSynthLoader(AudioDataLoader):
     def meets_requirements(self, att_dict):
         # TO-DO: check balance of instruments
         # Check range of pitches
-        inst = att_dict['instrument_family_str']
+        inst = att_dict['sound_name']
         if inst in self.inst_count.keys() and self.inst_count[inst] <= self.n_items_cls:
             if self.pitch_range in [[], ["all"]]:
                 self.inst_count[inst] += 1
                 return True
-            elif self.pitch_range[0] <= att_dict['pitch'] <= self.pitch_range[1] \
+            elif self.pitch_range[0] <= att_dict['midi_num'] <= self.pitch_range[1] \
             and not sum(self.inst_count.values()) >= self.size:  
                 self.inst_count[inst] += 1
                 return True
@@ -275,7 +266,7 @@ class NSynthLoader(AudioDataLoader):
     def get_labels(self, batch_size):
         label_batch = []
         for att, att_count in self.att_count.items():
-
+            #pdb.set_trace()
             label_batch.append(torch.multinomial(torch.Tensor(att_count), batch_size))
         return torch.stack(label_batch, dim=1)
 

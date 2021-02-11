@@ -2,7 +2,7 @@ import os
 import json
 import pickle as pkl
 import numpy as np
-
+import pdb
 import torch
 
 from utils.config import getConfigFromDict, getDictFromConfig, BaseConfig
@@ -33,7 +33,7 @@ class GANTrainer():
                  pathAttribDict=None,
                  selectedAttributes=None,
                  imagefolderDataset=False,
-                 ignoreAttribs=False, 
+                 ignoreAttribs=False,
                  nSamples=10,
                  **kargs):
         r"""
@@ -397,12 +397,14 @@ class GANTrainer():
                 inputs_real = self.inScaleUpdate(self.iter, scale, inputs_real)
                 # Optimize parameters
                 # if len(data) > 2:
+                #pdb.set_trace()
                 if type(labels) is tuple:
                     # mask = data[2]
                     mask = labels[1]
                     allLosses = self.model.optimizeParameters(
                         inputs_real, inputLabels=labels, inputMasks=mask)
                 else:
+                    #pdb.set_trace()
                     allLosses = self.model.optimizeParameters(inputs_real,
                                                               inputLabels=labels,
                                                               fakeLabels=dbLoader.dataset.get_labels(inputs_real.size(0)))
@@ -412,7 +414,9 @@ class GANTrainer():
                 state_msg = f'Iter: {self.iter}; scale: {scale} '
                 for key, val in allLosses.items():
                     state_msg += f'{self.loss_names_to_code(key)}: {val:.2f}; '
-                t.set_description(state_msg)
+                #t.set_description(state_msg)
+                #pdb.set_trace()
+                t.set_description(state_msg+'ShapeAllLosses: '+str(np.shape(allLosses.items())))
 
                 # Plot losses
                 if self.iter % self.lossPlot == 0 and self.iter != 0:

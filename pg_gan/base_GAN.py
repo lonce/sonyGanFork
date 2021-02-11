@@ -3,6 +3,8 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
+import numpy as np
+import pdb
 
 from utils.config import BaseConfig, updateConfig
 from . import base_loss_criterions
@@ -211,6 +213,8 @@ class BaseGAN():
         # #1 Real data
         predRealD = self.netD(self.real_input, False)
         # Classification criterion
+        print('Shapes of predRealD,self.realLabels,allLosses = ',np.shape(predRealD),np.shape(self.realLabels),np.shape(allLosses))
+
         allLosses["lossD_classif"] = \
             self.classificationPenalty(predRealD,
                                        self.realLabels,
@@ -222,6 +226,8 @@ class BaseGAN():
 
         # #2 Fake data
         inputLatent, targetRandCat = self.buildNoiseData(n_samples, self.realLabels)
+        print('Shapes of inputLatent, targetRandCat = ',np.shape(inputLatent), np.shape(targetRandCat))
+        #pdb.set_trace()
 
         predFakeG = self.netG(inputLatent).detach()
         predFakeD = self.netD(predFakeG, False)
@@ -653,3 +659,4 @@ class BaseGAN():
                         print(f"Error grads: {name}")
                         print(e)
                         continue
+                        
