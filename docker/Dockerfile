@@ -17,12 +17,20 @@ WORKDIR $PROJECT_DIR
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# install nsgt
+# install nsgt  #warnings seem to be OK
 RUN git clone https://github.com/grrrr/nsgt.git 
 WORKDIR $PROJECT_DIR/nsgt
 RUN python setup.py build
 RUN python setup.py install
 WORKDIR /sonyGan
+
+# install tifresi (see https://github.com/andimarafioti/tifresi)
+RUN apt-get update \
+ && DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata \
+ && apt-get install -y libfftw3-dev liblapack-dev cmake 
+RUN pip install cython
+RUN pip install tifresi
+
 
 ARG USER_ID
 ARG GROUP_ID

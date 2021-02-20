@@ -57,16 +57,16 @@ def generate(parser):
     interp_steps1norm=interp_steps1 -1 # because the batch generater will spread the steps out to include both endpoints
 
     usePM=argsObj["pm"]
-    print(f"interp_steps1 is {interp_steps1}, and usePM is {usePM}")
+    print(f"interp_steps1 is {interp_steps1}, and usePM (use ParamManager) is {usePM}")
 
     for p in range(minpitch, maxpitch+1) :
 
         # linear
-        #gen_batch, latents = eval_manager.test_single_pitch_latent_interpolation(pitch=p, z0=z0, z1=z1, steps=10)
+        #gen_batch, latents = eval_manager.test_single_pitch_latent_interpolation(p_val=p, z0=z0, z1=z1, steps=10)
         #sperical
         #gen_batch, latents = eval_manager.qslerp(pitch=p, z0=z0, z1=z1, steps=10)
         #staggred
-        gen_batch, latents = eval_manager.test_single_pitch_latent_staggered_interpolation(pitch=p, z0=z0, z1=z1, steps=interp_steps1, d1nvar=argsObj["d1nvar"], d1var=argsObj["d1var"])
+        gen_batch, latents = eval_manager.test_single_pitch_latent_staggered_interpolation(p_val=p, z0=z0, z1=z1, steps=interp_steps1, d1nvar=argsObj["d1nvar"], d1var=argsObj["d1var"])
 
 
         audio_out = map(postprocess, gen_batch)

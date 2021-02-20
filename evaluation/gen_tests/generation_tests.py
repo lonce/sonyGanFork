@@ -44,44 +44,45 @@ class StyleGEvaluationManager(object):
         
         return spreadvec
 
-    def test_single_pitch_random_z(self, pitch=55):
+    def test_single_pitch_random_z(self, ppppp="pitch", p_val=55):
         input_z = self.ref_rand_z.clone()
         input_z[:, -self.att_dim:] = torch.zeros(self.att_dim)
 
-        if "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+        if ppppp in self.att_manager.keyOrder:
+            ppppp_att_dict = self.att_manager.inputDict[ppppp]
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             att_shift = 0
             for j, att in enumerate(self.att_manager.keyOrder):
                 if att in self.att_manager.skipAttDfake: continue
-                if att == "pitch": break
+                if att == ppppp: break
                 att_shift += self.att_manager.attribSize[j]
-            # att_shift = sum(self.att_manager.attribSize[:pitch_att_indx])
+            # att_shift = sum(self.att_manager.attribSize[:ppppp_att_indx])
             try:
-                pitch_indx = \
-                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+                ppppp_indx = \
+                    self.att_manager.inputDict[ppppp]['values'].index(p_val)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
-            input_z[:, self.latent_noise_dim + att_shift + pitch_indx] = 1
+                ppppp_indx = randint(ppppp_att_size)
+            input_z[:, self.latent_noise_dim + att_shift + ppppp_indx] = 1
 
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
         return gen_batch, input_z
 
-    def test_single_z_pitch_sweep(self):
-        if "pitch" not in self.att_manager.keyOrder: 
-            raise AttributeError("Pitch not in the model's attributes")
-        pitch_att_dict = self.att_manager.inputDict['pitch']
-        pitch_att_indx = pitch_att_dict['order']
-        pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+    # chooses a ranodm latent vector, and sweeps across all the conditioned values of the ppppp parameter provided
+    def test_single_z_pitch_sweep(self, ppppp="pitch"):
+        if ppppp not in self.att_manager.keyOrder: 
+            raise AttributeError(f"{ppppp} not in the model's attributes")
+        ppppp_att_dict = self.att_manager.inputDict[ppppp]
+        ppppp_att_indx = ppppp_att_dict['order']
+        ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
         att_shift = 0
         for j, att in enumerate(self.att_manager.keyOrder):
             if att in self.att_manager.skipAttDfake: continue
-            if att == "pitch": break
+            if att == ppppp: break
             att_shift += self.att_manager.attribSize[j]
-        # att_shift = sum(self.att_manager.attribSize[:pitch_att_indx])
+        # att_shift = sum(self.att_manager.attribSize[:ppppp_att_indx])
         input_z = []
-        for i in range(pitch_att_size):
+        for i in range(ppppp_att_size):
             z = self.ref_rand_z[0].clone()
             z[-self.att_dim:] = torch.zeros(self.att_dim)
             z[-self.att_dim + att_shift + i] = 1
@@ -90,7 +91,10 @@ class StyleGEvaluationManager(object):
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
         return gen_batch, input_z
 
-    def test_single_pitch_latent_interpolation(self, pitch=55, z0=None, z1=None, steps=None):
+
+
+    # interpolates between two provided latent vectors at a particular value of the conditioned parameter ppppp
+    def test_single_pitch_latent_interpolation(self, ppppp="pitch", p_val=55, z0=None, z1=None, steps=None):
         z = self.ref_rand_z[:2, :].clone()
         if z0 != None :
             z[0,:]=z0
@@ -104,17 +108,17 @@ class StyleGEvaluationManager(object):
 
         #print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
 
-        if self.att_manager and "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+        if self.att_manager and ppppp in self.att_manager.keyOrder:
+            ppppp_att_dict = self.att_manager.inputDict[ppppp]
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             try:
-                pitch_indx = \
-                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+                ppppp_indx = \
+                    self.att_manager.inputDict[ppppp]['values'].index(p_val)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
+                ppppp_indx = randint(ppppp_att_size)
             
-            z[:, self.latent_noise_dim + pitch_indx] = 1
+            z[:, self.latent_noise_dim + ppppp_indx] = 1
         
         input_z = []
         for i in linspace(0., 1., steps, True):
@@ -131,7 +135,7 @@ class StyleGEvaluationManager(object):
         return gen_batch, input_z
 
 
-    def test_single_pitch_latent_staggered_interpolation(self, pitch=55, z0=None, z1=None, steps=None, d1nvar=1, d1var=.03):
+    def test_single_pitch_latent_staggered_interpolation(self, ppppp="pitch", p_val=55, z0=None, z1=None, steps=None, d1nvar=1, d1var=.03):
         z = self.ref_rand_z[:2, :].clone()
         if z0 != None :
             z[0,:]=z0
@@ -145,17 +149,17 @@ class StyleGEvaluationManager(object):
 
         #print(f"Input Norms z0={torch.norm(z0[:self.latent_noise_dim])} and z1={torch.norm(z1[:self.latent_noise_dim])}")
 
-        if self.att_manager and "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+        if self.att_manager and ppppp in self.att_manager.keyOrder:
+            ppppp_att_dict = self.att_manager.inputDict[ppppp]
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             try:
-                pitch_indx = \
-                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+                ppppp_indx = \
+                    self.att_manager.inputDict[ppppp]['values'].index(p_val)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
+                ppppp_indx = randint(ppppp_att_size)
             
-            z[:, self.latent_noise_dim + pitch_indx] = 1
+            z[:, self.latent_noise_dim + ppppp_indx] = 1
         
         input_z = []
 
@@ -183,7 +187,7 @@ class StyleGEvaluationManager(object):
 
 
 
-    def test_single_pitch_sph_latent_interpolation(self, pitch=55):
+    def test_single_pitch_sph_latent_interpolation(self, ppppp="pitch", p_val=55):
 
         def get_rand_gaussian_outlier(ndim):
             r = 3
@@ -210,17 +214,17 @@ class StyleGEvaluationManager(object):
             input_z = torch.stack(input_z).double()
             input_z = torch.cat([input_z, torch.zeros((input_z.size(0), self.att_dim)).double()], dim=1)
 
-        if "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+        if ppppp in self.att_manager.keyOrder:
+            ppppp_att_dict = self.att_manager.inputDict[ppppp]
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             try:
-                pitch_indx = \
-                    self.att_manager.inputDict['pitch']['values'].index(pitch)
+                ppppp_indx = \
+                    self.att_manager.inputDict[ppppp]['values'].index(p_val)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
+                ppppp_indx = randint(ppppp_att_size)
             
-            input_z[:, self.latent_noise_dim + pitch_indx] = 1
+            input_z[:, self.latent_noise_dim + ppppp_indx] = 1
         # input_z = torch.stack(z)
 
         gen_batch = self.model.test(input_z.float(), toCPU=True, getAvG=True)
@@ -257,14 +261,14 @@ class StyleGEvaluationManager(object):
             input_z = torch.cat([input_z, torch.zeros((input_z.size(0), self.att_dim)).double()], dim=1)
 
         if "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+            ppppp_att_dict = self.att_manager.inputDict['pitch']
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             try:
                 pitch_indx = \
                     self.att_manager.inputDict['pitch']['values'].index(pitch)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
+                pitch_indx = randint(ppppp_att_size)
             
             input_z[:, self.latent_noise_dim + pitch_indx] = 1
         # input_z = torch.stack(input_z)
@@ -280,8 +284,7 @@ class StyleGEvaluationManager(object):
 
 
 
-        #Here is my two-point spherical interpolation. which interpolated radius and angle between arbitrary points
-
+    #Here is my two-point spherical interpolation. which interpolated radius and angle between arbitrary points
     def qslerp(self, pitch=55, z0=None, z1=None, steps=None):
         if z0 != None :
             z0=z0[:self.latent_noise_dim]
@@ -337,14 +340,14 @@ class StyleGEvaluationManager(object):
             z = torch.cat([z, torch.zeros((z.size(0), self.att_dim)).cuda().double()], dim=1)
 
         if "pitch" in self.att_manager.keyOrder:
-            pitch_att_dict = self.att_manager.inputDict['pitch']
-            pitch_att_indx = pitch_att_dict['order']
-            pitch_att_size = self.att_manager.attribSize[pitch_att_indx]
+            ppppp_att_dict = self.att_manager.inputDict['pitch']
+            ppppp_att_indx = ppppp_att_dict['order']
+            ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
             try:
                 pitch_indx = \
                     self.att_manager.inputDict['pitch']['values'].index(pitch)
             except ValueError:
-                pitch_indx = randint(pitch_att_size)
+                pitch_indx = randint(ppppp_att_size)
             
             z[:, self.latent_noise_dim + pitch_indx] = 1
         # input_z = torch.stack(input_z)
