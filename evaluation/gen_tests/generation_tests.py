@@ -91,6 +91,27 @@ class StyleGEvaluationManager(object):
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
         return gen_batch, input_z
 
+    def test_random_z_pitch_sweep(self, ppppp="pitch"):
+        if ppppp not in self.att_manager.keyOrder:
+            raise AttributeError(f"{ppppp} not in the model's attributes")
+        ppppp_att_dict = self.att_manager.inputDict[ppppp]
+        ppppp_att_indx = ppppp_att_dict['order']
+        ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
+        att_shift = 0
+        for j, att in enumerate(self.att_manager.keyOrder):
+            if att in self.att_manager.skipAttDfake: continue
+            if att == ppppp: break
+            att_shift += self.att_manager.attribSize[j]
+        # att_shift = sum(self.att_manager.attribSize[:ppppp_att_indx])
+        input_z = []
+        for i in range(ppppp_att_size):
+            z = self.ref_rand_z[i].clone()
+            z[-self.att_dim:] = torch.zeros(self.att_dim)
+            z[-self.att_dim + att_shift + i] = 1
+            input_z.append(z)
+        input_z = torch.stack(input_z)
+        gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
+        return gen_batch, input_z
 
 
     # interpolates between two provided latent vectors at a particular value of the conditioned parameter ppppp

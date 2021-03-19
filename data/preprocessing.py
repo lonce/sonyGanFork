@@ -353,6 +353,7 @@ class AudioPreprocessor(DataPreprocessor):
                     np.zeros(self.audio_length - len(signal))
                 )
             else:
+                signal = signal[0:self.audio_length]
                 return signal
         self.pre_pipeline.append(zeropad)
 
