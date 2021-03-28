@@ -222,6 +222,19 @@ scale -gerates a bunch of files generated using latent vectors with the conditio
 interpolation - generates a bunch of files at a given pitch interpolating from one random (?) point in the latent space to another.   
 random - generates a bunch of files from random points in the latent space letting you get an idea of the achievable variation. 
 
+# Synthesizing audio on parameter subspaces
+
+If you have saved audio as above ("Synthesizing audio with a model"), you will have .pt files that have the latent vectors for your sounds. You can then use those vectors to create new sets of audio that interpolate between said vectors. Here are some examples.
+### synthesize from unconditionally trained models:
+###### 1D (between two vectors) sampled at 11 pts, each with 3 variations in a gaussian distribution:
+```
+$ python generate.py 2D4pt --z0 vector_19.pt --z1 vector_21.pt  --d0 11  --pm True --d1nvar=3 --d1var .1 -d output/oreilly2
+```
+###### 2D plane defined by two lines (z0, z1) and (z2, z3) sampled on a 21x21 grid with no variations:
+```
+$ python generate.py 2D4pt --z0 vector_19.pt --z1 vector_21.pt --z2 vector_88.pt --z3 vector_89.pt --d0 21 --d1 21 --d1nvar 1 --d1var 0.03 --pm True -d output/oreilly2
+```
+The --pm flag is for optionally using the paramManager metadata file format rather than the python .pt files. 
 
 # Audio examples (from sony)
 [Here](https://sites.google.com/view/audio-synthesis-with-gans/p%C3%A1gina-principal) you can listen to audios synthesized with models trained on a variety of audio representations, includeing the raw audio waveform and several time-frequency representations.

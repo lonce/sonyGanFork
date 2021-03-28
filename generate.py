@@ -34,18 +34,28 @@ if __name__ == "__main__":
                         type=int, dest="p0", default=55)
     parser.add_argument('--p1', help='param1 for endpoint of dimension 1 (for 2D)',
                         type=int, dest="p1", default=55)
+
     parser.add_argument('--z0', help='z0 filename (for 2D)',
                         type=str, dest="z0", default="./output/z0.txt")
     parser.add_argument('--z1', help='z1 filename (for 2D)',
                         type=str, dest="z1", default="./output/z1.txt")
+
+
+    parser.add_argument('--z2', help='z2 filename (for 2D)',
+                        type=str, dest="z2", default=None)
+    parser.add_argument('--z3', help='z3 filename (for 2D)',
+                        type=str, dest="z3", default=None)
+
+
+
     parser.add_argument('--d0', help='discretization along first dimension, p0...p1, including endpoint (for 2D)' ,
-                        type=int, dest="d0", default=13)
+                        type=int, dest="d0", default=1)
     parser.add_argument('--d0nvar', help='number of variations around each central value at this point' ,
                         type=int, dest="d0nvar", default=1)
     parser.add_argument('--d0var', help='size of variation around each central value at this point' ,
                         type=float, dest="d0var", default=.03)
     parser.add_argument('--d1', help='discretization along second dimension z0...z1, including endpoint (for 2D)',
-                        type=int, dest="d1", default=10)
+                        type=int, dest="d1", default=1)
     parser.add_argument('--d1nvar', help='number of variations around each central value at this point' ,
                         type=int, dest="d1nvar", default=1)
     parser.add_argument('--d1var', help='size of variation around each central value at this point' ,

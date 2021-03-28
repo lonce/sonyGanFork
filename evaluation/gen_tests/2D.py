@@ -61,12 +61,15 @@ def generate(parser):
 
     for p in range(minpitch, maxpitch+1) :
 
+        #######   ---- with conditioned pitch
         # linear
         #gen_batch, latents = eval_manager.test_single_pitch_latent_interpolation(p_val=p, z0=z0, z1=z1, steps=10)
         #sperical
         #gen_batch, latents = eval_manager.qslerp(pitch=p, z0=z0, z1=z1, steps=10)
         #staggred
         gen_batch, latents = eval_manager.test_single_pitch_latent_staggered_interpolation(p_val=p, z0=z0, z1=z1, steps=interp_steps1, d1nvar=argsObj["d1nvar"], d1var=argsObj["d1var"])
+
+
 
 
         audio_out = map(postprocess, gen_batch)
@@ -79,7 +82,7 @@ def generate(parser):
                            latents=latents)
 
         else:                       # save paramManager files, (and don't write latents separately)
-            data=list(audio_out) #LW it was a map
+            data=list(audio_out) #LW it was a map, make it a list
             zdata=zip(data,latents) #zip so we can enumerate through pairs of data/latents
 
             istep=0

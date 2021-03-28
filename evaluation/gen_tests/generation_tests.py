@@ -114,7 +114,55 @@ class StyleGEvaluationManager(object):
         return gen_batch, input_z
 
 
-    # interpolates between two provided latent vectors at a particular value of the conditioned parameter ppppp
+    #--------------------------------------------------------------------------------------------------
+    '''
+        Just take four vectors in the latent space (specified with .pt files), uses the first 2 to define one line, 
+        the second pair to define another. The two lines define a twisted plane that is sampled as a grid. 
+        (If just you want to interpolate along a line (rather than a plane), leave line1zX at default (0) and d1steps at default (1).
+        
+        The function assumes that network was trained unconditionally (asserting that there is no conditioning segment of 
+        the latent vector). 
+        
+        The dimension parallel to the lines is the "least significant bit" in the nested loop, and samples d0steps points.
+        The dimension orthogonal to the lines is the "msb", the outer loop, and samples d1steps points.
+
+        //d1nvar - number of variation at each grip point interp step
+        //d1var  - the variance of the gaussian for drawing variations around each grid oint
+    '''
+    def unconditioned_linear_interpolation(self, line0z0, line0z1, line1z0=0, line1z1=0, d0steps=1, d1steps=1, d1nvar=1, d1var=.03) :
+        # initialize a tensor of the right size
+        z = self.ref_rand_z[:2, :].clone()
+        assert self.att_dim == 0,  "Yo, this network was trained with some conditioning params you MUST include someway"
+        
+        input_z = []
+
+        # step orthogonal to the lines
+        for i in linspace(0., 1., d1steps, True) :
+            z[0,:]=(1-i)*line0z0 + i*line1z0
+            z[1,:]=(1-i)*line0z1 + i*line1z1
+    
+            # step parallel to the lines
+            for j in linspace(0., 1., d0steps, True):
+                p=(1-j)*z[0] + j*z[1]
+                input_z.append(p)
+                # are we doing variations?
+                for nv in range(1, d1nvar):
+                    # normal in our latent space
+                    p=p+torch.randn(self.latent_noise_dim).cuda()*d1var
+                    input_z.append(p)
+
+
+        input_z = torch.stack(input_z)
+
+        #print(f"Output norms input_z0={torch.norm(input_z[0][:self.latent_noise_dim])} and input_z1={torch.norm(input_z[steps-1][:self.latent_noise_dim])}")
+
+        gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
+        return gen_batch, input_z
+
+
+    #--------------------------------------------------------------------------------------------------
+
+    # interpolates between two provided latent vectors (optionally) at a particular value of the conditioned parameter ppppp
     def test_single_pitch_latent_interpolation(self, ppppp="pitch", p_val=55, z0=None, z1=None, steps=None):
         z = self.ref_rand_z[:2, :].clone()
         if z0 != None :
@@ -156,6 +204,8 @@ class StyleGEvaluationManager(object):
         return gen_batch, input_z
 
 
+
+
     def test_single_pitch_latent_staggered_interpolation(self, ppppp="pitch", p_val=55, z0=None, z1=None, steps=None, d1nvar=1, d1var=.03):
         z = self.ref_rand_z[:2, :].clone()
         if z0 != None :
@@ -184,7 +234,7 @@ class StyleGEvaluationManager(object):
         
         input_z = []
 
-        for i in linspace(0., 1., steps, True):  #nonlinear interpolation (slow down in the middle)
+        for i in linspace(0., 1., steps, True):  
 
             for nv in range(d1nvar):
                 if nv > 0 :   #the first one will be z unperturbed
