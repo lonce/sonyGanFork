@@ -144,6 +144,11 @@ if __name__ == "__main__":
                                nSamples=nSamples,
                                config=model_config)
 
+    if not kwargs["restart"] and checkPointData is not None:
+        print(f"REsTARTING FROM CHECKPONT")
+    else: 
+        print(f" kwargs['restart'] = {kwargs['restart']} and checkPointData = {checkPointData} !")
+
     # If a checkpoint is found, load it
     if not kwargs["restart"] and checkPointData is not None:
         trainConfig, pathModel, pathTmpData = checkPointData

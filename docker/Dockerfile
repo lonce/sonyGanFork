@@ -6,7 +6,8 @@ ENV PROJECT_DIR /working
 RUN mkdir $PROJECT_DIR
 WORKDIR $PROJECT_DIR
 
-RUN pip install --upgrade --ignore-installed "llvmlite>=0.34.0.dev0,<0.35"
+#RUN pip install --upgrade --ignore-installed "llvmlite>=0.34.0.dev0,<0.35"
+RUN pip install  llvmlite
 
 # install freesound
 RUN git clone https://github.com/MTG/freesound-python.git 
@@ -44,3 +45,4 @@ CMD ["bash"]
 
 # To run - go to your CompareGan directory, run 
 # docker run --ipc=host --gpus all -it -v $(pwd):/sonyGan -v /full/path/to/folder/containing/nsynth-train:/mydata foo:bar
+# docker run  --ipc=host --gpus "device=0" -it -v $(pwd):/sonyGan -v /scratch/lonce:/mydata --rm lonce:tifresi

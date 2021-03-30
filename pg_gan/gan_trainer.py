@@ -202,6 +202,8 @@ class GANTrainer():
         tmpPathLossLog = None
         tmpConfig = {}
 
+        #breakpoint();
+
         if pathTmpConfig is not None:
             tmpConfig = json.load(open(pathTmpConfig, 'rb'))
             self.startScale = tmpConfig["scale"]

@@ -1,7 +1,7 @@
 {
     "output_path": "output",
     "loaderConfig": {
-        "data_path": "/mydata/oreilly/audio",
+        "data_path": "/mydata/oreilly/audio/",
         "att_dict_path": "/mydata/oreilly/oreilly.json",
 	"filter_keys": {"sound_source": ["O'REILLY"]},
         "shuffle": false,
@@ -14,7 +14,7 @@
 		"transform": "pghi",
 	"stft_channels": 512,
         "n_frames": 128,
-        "hop_size": 128,
+        "hop_size": 64,
         "sample_rate": 22050
     },
     "modelConfig": { 
