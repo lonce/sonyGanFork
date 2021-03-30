@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from numpy.random import randint
 from numpy import linspace
-
+import pdb
 
 class StyleGEvaluationManager(object):
     def __init__(self, model, n_gen=20, get_avg=False):
@@ -87,6 +87,36 @@ class StyleGEvaluationManager(object):
             z[-self.att_dim:] = torch.zeros(self.att_dim)
             z[-self.att_dim + att_shift + i] = 1
             input_z.append(z)
+        input_z = torch.stack(input_z)
+        gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
+        return gen_batch, input_z
+
+    def test_single_z_pitch_sweep_fine(self, ppppp="pitch"):
+        if ppppp not in self.att_manager.keyOrder:
+            raise AttributeError(f"{ppppp} not in the model's attributes")
+        ppppp_att_dict = self.att_manager.inputDict[ppppp]
+        ppppp_att_indx = ppppp_att_dict['order']
+        ppppp_att_size = self.att_manager.attribSize[ppppp_att_indx]
+        att_shift = 0
+        for j, att in enumerate(self.att_manager.keyOrder):
+            if att in self.att_manager.skipAttDfake: continue
+            if att == ppppp: break
+            att_shift += self.att_manager.attribSize[j]
+        # att_shift = sum(self.att_manager.attribSize[:ppppp_att_indx])
+        input_z = []
+        finediv = 4
+        for i in range(ppppp_att_size):
+            z = self.ref_rand_z[0].clone()
+            z[-self.att_dim:] = torch.zeros(self.att_dim)
+            z[-self.att_dim + att_shift + i] = 1
+            input_z.append(z)
+            for finept in range(finediv-1):
+                z = self.ref_rand_z[0].clone()
+                z[-self.att_dim:] = torch.zeros(self.att_dim)
+                z[-self.att_dim + att_shift + i] = 1-((finept+1)/finediv)
+                z[-self.att_dim + att_shift + i+1] = (finept+1)/finediv
+                input_z.append(z)
+                
         input_z = torch.stack(input_z)
         gen_batch = self.model.test(input_z, toCPU=True, getAvG=True)
         return gen_batch, input_z
