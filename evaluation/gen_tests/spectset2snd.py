@@ -34,23 +34,11 @@ def generate(parser):
     # Create output evaluation dir
     output_dir = mkdir_in_path(args.dir, f"generation_tests")
     output_dir = mkdir_in_path(output_dir, model_name)
-    output_dir = mkdir_in_path(output_dir, "2D")
+    output_dir = mkdir_in_path(output_dir, "2D_spectset")
     output_dir = mkdir_in_path(output_dir, datetime.now().strftime('%Y-%m-%d %H:%M'))
 
 
-    # Create evaluation manager
-    eval_manager = StyleGEvaluationManager(model, n_gen=2)
-
-    z0=torch.load(argsObj["z0"])
-    z1=torch.load(argsObj["z1"])
-    if argsObj["z2"] == None :
-        z2=0
-    else :
-        z2=torch.load(argsObj["z2"])
-    if argsObj["z3"] == None : 
-        z3 = 0
-    else :
-        z3=torch.load(argsObj["z3"])
+    gen_batch, latents=torch.load(argsObj["gen_batch"])
 
 
     interp_steps0=int(argsObj["d0"])
@@ -59,44 +47,43 @@ def generate(parser):
     interp_steps1=int(argsObj["d1"])
     interp_steps1norm=interp_steps1 -1 # because the batch generater will spread the steps out to include both endpoints
 
+
     usePM=argsObj["pm"]
-    print(f"interp_steps0 is {interp_steps0}, interp_steps1 is {interp_steps1}, and usePM (use ParamManager) is {usePM}")
-
-
-
-    #######   ---- unconditioned 
-    gen_batch, latents = eval_manager.unconditioned_linear_interpolation(line0z0=z0, line0z1=z1, line1z0=z2, line1z1=z3, d0steps=interp_steps0, d1steps=interp_steps1, d1nvar=argsObj["d1nvar"], d1var=argsObj["d1var"])
-
+ 
     g=list(gen_batch)
-    #for k in length
+
+    assert interp_steps0*interp_steps1==len(g), f"product of d0, d1 interpolation steps({interp_steps0},{interp_steps1}) != batch length ({len(g)})"
+
+
 
     audio_out = map(postprocess, gen_batch)
 
-
-        #save the .pt file no matter what since we may want to use them to zoom in, resample, or whatever.
-    if not usePM :  
+    if not usePM :  #then just output as usual, including option to write latents if provided
         saveAudioBatch(audio_out,
-                   path=output_dir,
-                   basename='test_2D4pt', 
-                   sr=config["transformConfig"]["sample_rate"],
-                   latents=latents)
+                       path=output_dir,
+                       basename='test_2D4pt', 
+                       sr=config["transformConfig"]["sample_rate"],
+                       latents=latents)
 
-    else :                      # save paramManager files, (and don't write latents separately)
+    else:                       # save paramManager files, (and don't write latents separately)
         data=list(audio_out) #LW it was a map, make it a list
         zdata=zip(data,latents) #zip so we can enumerate through pairs of data/latents
 
 
         vstep=-1  # gets incremented in loop
 
-        rowlength=interp_steps0*argsObj["d1nvar"]
+        #d1nvar=argsObj["d1nvar"]
+        d1nvar=1 # no variations for this spectset generation
+
+        rowlength=interp_steps0*d1nvar
         print(f'rowlength is {rowlength}')
 
         for k, (audio, params) in enumerate(zdata) :
             istep = int(k/rowlength)  #the outer counter, orthogonal to the two lines defining the submanifold
 
             j=k%rowlength
-            jstep=int(j/argsObj["d1nvar"])
-            vstep=(vstep+1)%argsObj["d1nvar"]
+            jstep=int(j/d1nvar)
+            vstep=(vstep+1)%d1nvar
 
             print(f'doing row {istep}, col {jstep}, and variation {vstep}')
 
@@ -104,7 +91,7 @@ def generate(parser):
                 audio = np.array(audio, float)
 
             path=output_dir
-            basename='test_2D4pt' 
+            basename='test_spectset2snd' 
             sr=config["transformConfig"]["sample_rate"]
 
             #foo=f'{basename}_{jstep}_{vstep}.wav'
@@ -115,10 +102,6 @@ def generate(parser):
             #param_out_path = os.path.join(path, f'{basename}_{i}.params')
             pm.initParamFiles(overwrite=True)
 
-
-            #also save pt files in case we want to use them to create other grids, scales, etc.
-            pt_param_out_path = os.path.join(path, f'{basename}_d1.{istep}_d0.{jstep}_v.{vstep}.pt')
-            torch.save(params, pt_param_out_path)
 
             if not os.path.exists(out_path):
                 #write_wav(out_path, audio.astype(float), sr)
@@ -145,5 +128,4 @@ def generate(parser):
 
 
 
-
-print("FINISHED!\n")
+    print("FINISHED!\n")
