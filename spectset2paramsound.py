@@ -62,5 +62,3 @@ if __name__ == "__main__":
     if out is not None and not out:
         print("...FAIL")
 
-    else:
-        print("...OK")

@@ -1,0 +1,26 @@
+{
+	"#-----------------": "xlength (pitch)and ylength (timbre) define the numper of points in the mesh ------",
+	"xlength": 21,
+	"ylength": 21,
+	"minPitch": "None",
+	"maxPitch": "None",
+	"#-----------------": "If pitch is one of your dimensions, you probably DON'T want to adapt the grid along the dim that pitch changes.",
+	"#-----------------": "if (pitchDim == 0 probably want directions restricted to [2,6])",
+	"#-----------------": "if (pitchDim == 1 probably want directions restricted to [0,4])",
+	"pitchDim": "None",
+	"directions": [0,1,2,3,4,5,6,7],
+
+	"step": 0.00000001,
+	"iterations": 101,
+	"log_iterations" : 100,
+	"clampedges": "True",
+
+	"checkpointDir" : "output/oreilly2",
+	"#------------------" : "filenames are relative to checkpointDir   ------------------------------",
+	"outpath" : "/SOMoutput",
+	"outptfile" : "foo.pt",
+	"z0": "/generation_tests/oreilly2_s4_i149970/random/2021-02-24 02:34/test_pitch_sweep_19.pt",
+	"z1": "/generation_tests/oreilly2_s4_i149970/random/2021-02-24 02:34/test_pitch_sweep_21.pt",
+	"z2": "/generation_tests/oreilly2_s4_i149970/random/2021-02-24 02:34/test_pitch_sweep_88.pt",
+	"z3": "/generation_tests/oreilly2_s4_i149970/random/2021-02-24 02:34/test_pitch_sweep_89.pt"
+}

@@ -9,7 +9,7 @@
 ## <span style="color:maroon"> 1. GAN Training </span>
 
 1. Prepare a dataset
-   1. a) Create a directory with your collection of audio files. You config file will point to this directory
+   1. a) Create a directory with your collection of audio files. Your config file will point to this directory
 2. Start Docker
    1. a) fire up a docker container from the image *from the sonyGanForked directory* (don't change the first -v mounting arg). The second mounting arg needs the full path to your data directory before the colon, leave the name 'mydata' as it is. 'foo' and 'bar' are whatever name and tag you gave to your docker image.
 
@@ -17,7 +17,7 @@
  $ docker run  --shm-size=10g --gpus "device=0" -it -v $(pwd):/sonyGan -v /full/path/to/datadir:/mydata --rm foo:bar
 ```
 	3. Prepare you config file (see README.md) 
- 	4. Run a training script. This runs a small configuration, creating output in output/outname:
+	4. Run a training script. This runs a small configuration, creating output in output/outname:
 
 ```
 runscripts/runtrain.sh -n outname  <path-to-configuration-file>
@@ -43,7 +43,7 @@ python generate.py 2D4pt --z0 path/filename0.pt --z1 path/filename1.pt --z2 path
 
 ## <span style="color:maroon"> 2a. Interact! </span>
 
-1. Whenever you have a grid of sound samples, you can use the hand-dandy browser app to display and play sounds. Clone: https://github.com/lonce/svgSoundGrid , put the sounds in the resources directory, and change the load function to load your files. 
+1. Whenever you have a grid of sound samples, you can use the hand-dandy browser app to display and play sounds. Clone: https://github.com/lonce/basicSoundGrid, and just edit the 'config' section of the gridApp.html to provide the grid size and path to your sound folder.
 
 ## <span style="color:maroon"> 3. Linearize with the SOM </span>
 

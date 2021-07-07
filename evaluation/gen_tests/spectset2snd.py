@@ -35,7 +35,7 @@ def generate(parser):
     output_dir = mkdir_in_path(args.dir, f"generation_tests")
     output_dir = mkdir_in_path(output_dir, model_name)
     output_dir = mkdir_in_path(output_dir, "2D_spectset")
-    output_dir = mkdir_in_path(output_dir, datetime.now().strftime('%Y-%m-%d %H:%M'))
+    output_dir = mkdir_in_path(output_dir, datetime.now().strftime('%Y-%m-%d_%H.%M'))
 
 
     gen_batch, latents=torch.load(argsObj["gen_batch"])
@@ -85,7 +85,7 @@ def generate(parser):
             jstep=int(j/d1nvar)
             vstep=(vstep+1)%d1nvar
 
-            print(f'doing row {istep}, col {jstep}, and variation {vstep}')
+            #print(f'doing row {istep}, col {jstep}, and variation {vstep}')
 
             if type(audio) != np.ndarray:
                 audio = np.array(audio, float)
@@ -128,4 +128,4 @@ def generate(parser):
 
 
 
-    print("FINISHED!\n")
+    print(f"GRID data output path/pattern: {out_path}\n")

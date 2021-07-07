@@ -1,0 +1,26 @@
+{
+	"#-----------------": "xlength (pitch)and ylength (timbre) define the numper of points in the mesh ------",
+	"xlength": 21,
+	"ylength": 21,
+	"minPitch": 56,
+	"maxPitch": 76,
+	"#-----------------": "If pitch is one of your dimensions, you probably DON'T want to adapt the grid along the dim that pitch changes.",
+	"#-----------------": "if (pitchDim == 0 probably want directions restricted to [2,6])",
+	"#-----------------": "if (pitchDim == 1 probably want directions restricted to [0,4])",
+	"pitchDim": 1,
+	"directions": [0,4],
+
+	"step": 0.00005,
+	"iterations": 101,
+	"log_iterations" : 100,
+	"clampedges": "True",
+
+	"checkpointDir" : "output/outname_nsynthsubset_hop128_PGHI_extendedpitch",
+	"#------------------" : "filenames are relative to checkpointDir   ------------------------------",
+	"outpath" : "/SOMoutput",
+	"outptfile" : "foo.pt",
+	"z0": "/generation_tests/outname_nsynthsubset_hop128_PGHI_extendedpitch_s4_i299899/random/2021-06-24 07:32/test_pitch_sweep_17.pt",
+	"z1": "/generation_tests/outname_nsynthsubset_hop128_PGHI_extendedpitch_s4_i299899/random/2021-06-24 07:32/test_pitch_sweep_17.pt",
+	"z2": "/generation_tests/outname_nsynthsubset_hop128_PGHI_extendedpitch_s4_i299899/random/2021-06-24 07:32/test_pitch_sweep_21.pt",
+	"z3": "/generation_tests/outname_nsynthsubset_hop128_PGHI_extendedpitch_s4_i299899/random/2021-06-24 07:32/test_pitch_sweep_21.pt"
+}
